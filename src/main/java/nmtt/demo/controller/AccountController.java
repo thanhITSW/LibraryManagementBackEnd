@@ -1,6 +1,7 @@
 package nmtt.demo.controller;
 
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.AccountCreationRequest;
 import nmtt.demo.dto.request.AccountUpdateRequest;
 import nmtt.demo.dto.request.ApiResponse;
@@ -9,11 +10,13 @@ import nmtt.demo.entity.Account;
 import nmtt.demo.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
+@Slf4j
 public class AccountController {
 
     @Autowired
@@ -24,21 +27,31 @@ public class AccountController {
     }
 
     @GetMapping
-    public List<Account> getAllUsers() {
-        return accountService.getAccount();
+    ApiResponse<List<AccountResponse>> getAllUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        log.info("Username: {}", authentication.getName());
+        authentication.getAuthorities()
+                .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
+
+        return ApiResponse.<List<AccountResponse>>builder()
+                .result(accountService.getAccount())
+                .build();
     }
 
     @PostMapping
-    public ApiResponse<Account> createAccount(@RequestBody @Valid AccountCreationRequest request){
-        ApiResponse<Account> apiResponse = new ApiResponse<>();
+    public ApiResponse<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request){
+        ApiResponse<AccountResponse> apiResponse = new ApiResponse<>();
 
-        apiResponse.setResult(accountService.createRequest(request));
+        apiResponse.setResult(accountService.createAccount(request));
         return apiResponse;
     }
 
-    @GetMapping("/{userId}")
-    public Account getAccountById(@PathVariable("userId") String userId){
-        return accountService.getAccountById(userId);
+    @GetMapping("/myInfo")
+    ApiResponse<AccountResponse> getMyInfo(){
+        return ApiResponse.<AccountResponse>builder()
+                .result(accountService.getMyInfo())
+                .build();
     }
 
     @PutMapping("/{userId}")
