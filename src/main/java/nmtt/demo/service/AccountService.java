@@ -3,19 +3,20 @@ package nmtt.demo.service;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
+import nmtt.demo.constant.PredefinedRole;
 import nmtt.demo.dto.request.AccountCreationRequest;
 import nmtt.demo.dto.request.AccountUpdateRequest;
 import nmtt.demo.dto.response.AccountResponse;
 import nmtt.demo.entity.Account;
-import nmtt.demo.enums.Role;
+import nmtt.demo.entity.Role;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.exception.ErrorCode;
 import nmtt.demo.mapper.AccountMapper;
 import nmtt.demo.repository.AccountRepository;
+import nmtt.demo.repository.RoleRepository;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -30,9 +31,9 @@ public class AccountService {
     AccountRepository accountRepository;
     AccountMapper accountMapper;
     PasswordEncoder passwordEncoder;
+    RoleRepository roleRepository;
 
     public AccountResponse createAccount(AccountCreationRequest request){
-//        Account account = new Account();
 
         if(accountRepository.existsByEmail(request.getEmail())){
             throw new AppException(ErrorCode.USER_EXISTED);
@@ -41,14 +42,15 @@ public class AccountService {
         Account account = accountMapper.toAccount(request);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
-        HashSet<String> roles = new HashSet<>();
-        roles.add(Role.USER.name());
+        HashSet<Role> roles = new HashSet<>();
+        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
         account.setRoles(roles);
 
         return accountMapper.toAccountResponse(accountRepository.save(account));
     }
 
     @PreAuthorize("hasRole('ADMIN')")
+//    @PreAuthorize("hasAuthority('APPROVE_POST')")   //phân quyền chức năng
     public List<AccountResponse> getAccount(){
         return accountRepository.findAll().stream().map(accountMapper::toAccountResponse).toList();
     }
@@ -74,6 +76,10 @@ public class AccountService {
                 .orElseThrow(() -> new RuntimeException("Account not found") );;
 
         accountMapper.updateAccount(account, request);
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        var roles = roleRepository.findAllById(request.getRoles());
+        account.setRoles(new HashSet<>(roles));
         return accountMapper.toAccountResponse(accountRepository.save(account));
     }
 

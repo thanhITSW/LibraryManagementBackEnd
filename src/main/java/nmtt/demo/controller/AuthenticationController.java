@@ -4,9 +4,7 @@ import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import nmtt.demo.dto.request.ApiResponse;
-import nmtt.demo.dto.request.AuthenticationRequest;
-import nmtt.demo.dto.request.IntrospectRequest;
+import nmtt.demo.dto.request.*;
 import nmtt.demo.dto.response.AuthenticationResponse;
 import nmtt.demo.dto.response.IntrospectResponse;
 import nmtt.demo.service.AuthenticationService;
@@ -36,6 +34,21 @@ public class AuthenticationController {
         var result = authenticationService.introspect(request);
         return ApiResponse.<IntrospectResponse>builder()
                 .result(result)
+                .build();
+    }
+
+    @PostMapping("/refresh")
+    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request) throws ParseException, JOSEException {
+        var result = authenticationService.refreshToken(request);
+        return ApiResponse.<AuthenticationResponse>builder()
+                .result(result)
+                .build();
+    }
+
+    @PostMapping("/logout")
+    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+        authenticationService.logout(request);
+        return ApiResponse.<Void>builder()
                 .build();
     }
 }

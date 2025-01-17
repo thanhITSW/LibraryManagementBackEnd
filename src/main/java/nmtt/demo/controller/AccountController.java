@@ -1,14 +1,15 @@
 package nmtt.demo.controller;
 
 import jakarta.validation.Valid;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.AccountCreationRequest;
 import nmtt.demo.dto.request.AccountUpdateRequest;
 import nmtt.demo.dto.request.ApiResponse;
 import nmtt.demo.dto.response.AccountResponse;
-import nmtt.demo.entity.Account;
 import nmtt.demo.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -17,14 +18,11 @@ import java.util.List;
 @RestController
 @RequestMapping("/accounts")
 @Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccountController {
 
-    @Autowired
     AccountService accountService;
-
-    public AccountController(AccountService accountService) {
-        this.accountService = accountService;
-    }
 
     @GetMapping
     ApiResponse<List<AccountResponse>> getAllUsers() {
