@@ -1,8 +1,8 @@
 package nmtt.demo.mapper;
 
-import nmtt.demo.dto.request.AccountCreationRequest;
-import nmtt.demo.dto.request.AccountUpdateRequest;
-import nmtt.demo.dto.response.AccountResponse;
+import nmtt.demo.dto.request.Account.AccountCreationRequest;
+import nmtt.demo.dto.request.Account.AccountUpdateRequest;
+import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.entity.Account;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

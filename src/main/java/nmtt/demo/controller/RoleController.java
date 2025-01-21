@@ -3,9 +3,9 @@ package nmtt.demo.controller;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import nmtt.demo.dto.request.ApiResponse;
-import nmtt.demo.dto.request.RoleRequest;
-import nmtt.demo.dto.response.RoleResponse;
+import nmtt.demo.dto.request.Account.ApiResponse;
+import nmtt.demo.dto.request.Account.RoleRequest;
+import nmtt.demo.dto.response.Account.RoleResponse;
 import nmtt.demo.service.RoleService;
 import org.springframework.web.bind.annotation.*;
 

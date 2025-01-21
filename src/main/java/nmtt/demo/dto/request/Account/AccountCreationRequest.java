@@ -1,4 +1,4 @@
-package nmtt.demo.dto.request;
+package nmtt.demo.dto.request.Account;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;

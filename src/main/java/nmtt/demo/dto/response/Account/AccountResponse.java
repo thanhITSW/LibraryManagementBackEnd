@@ -1,4 +1,4 @@
-package nmtt.demo.dto.response;
+package nmtt.demo.dto.response.Account;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
@@ -18,4 +18,6 @@ public class AccountResponse {
     String lastName;
     LocalDate dob;
     Set<RoleResponse> roles;
+    boolean active;
+
 }

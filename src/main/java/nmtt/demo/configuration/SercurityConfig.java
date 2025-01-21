@@ -28,7 +28,11 @@ import javax.crypto.spec.SecretKeySpec;
 public class SercurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/accounts", "/auth/login", "/auth/introspect", "/auth/logout", "/auth/refresh"
+            "/accounts", "/accounts/resetPass", "/auth/login", "/auth/introspect", "/auth/logout", "/auth/refresh"
+    };
+
+    private final String[] PUBLIC_ENDPOINTS_GET = {
+            "/auth/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
@@ -37,6 +41,7 @@ public class SercurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->
                 request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
+                        .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
                 .anyRequest()
                 .authenticated()
         );

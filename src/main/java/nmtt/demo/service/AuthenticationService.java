@@ -10,12 +10,12 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.dto.request.AuthenticationRequest;
-import nmtt.demo.dto.request.IntrospectRequest;
-import nmtt.demo.dto.request.LogoutRequest;
-import nmtt.demo.dto.request.RefreshRequest;
-import nmtt.demo.dto.response.AuthenticationResponse;
-import nmtt.demo.dto.response.IntrospectResponse;
+import nmtt.demo.dto.request.Account.AuthenticationRequest;
+import nmtt.demo.dto.request.Account.IntrospectRequest;
+import nmtt.demo.dto.request.Account.LogoutRequest;
+import nmtt.demo.dto.request.Account.RefreshRequest;
+import nmtt.demo.dto.response.Account.AuthenticationResponse;
+import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.InvalidatedToken;
 import nmtt.demo.exception.AppException;
@@ -31,7 +31,6 @@ import org.springframework.util.CollectionUtils;
 import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
-import java.util.Collections;
 import java.util.Date;
 import java.util.StringJoiner;
 import java.util.UUID;
@@ -69,10 +68,16 @@ public class AuthenticationService {
 
         var token = generateToken(account);
 
-        return AuthenticationResponse.builder()
+        return account.isActive() ?
+                AuthenticationResponse.builder()
                 .token(token)
                 .authenticated(authenticated)
-                .build();
+                .build() :
+                AuthenticationResponse.builder()
+                        .token("Tài khoản của bạn chưa được kích hoạt")
+                        .authenticated(false)
+                        .build()
+                ;
     }
 
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
@@ -197,5 +202,15 @@ public class AuthenticationService {
         }
 
         return stringJoiner.toString();
+    }
+
+    public void activeAccount(String accountId){
+        Account account = accountRepository.findById(accountId)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        account.setActive(true);
+
+        accountRepository.save(account);
+
     }
 }

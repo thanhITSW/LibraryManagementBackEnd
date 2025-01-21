@@ -1,7 +1,7 @@
 package nmtt.demo.mapper;
 
-import nmtt.demo.dto.request.RoleRequest;
-import nmtt.demo.dto.response.RoleResponse;
+import nmtt.demo.dto.request.Account.RoleRequest;
+import nmtt.demo.dto.response.Account.RoleResponse;
 import nmtt.demo.entity.Role;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

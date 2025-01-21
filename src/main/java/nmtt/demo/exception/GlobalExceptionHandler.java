@@ -1,6 +1,6 @@
 package nmtt.demo.exception;
 
-import nmtt.demo.dto.request.ApiResponse;
+import nmtt.demo.dto.request.Account.ApiResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;

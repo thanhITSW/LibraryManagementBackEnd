@@ -5,11 +5,13 @@ import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.dto.request.AccountCreationRequest;
-import nmtt.demo.dto.request.AccountUpdateRequest;
-import nmtt.demo.dto.request.ApiResponse;
-import nmtt.demo.dto.response.AccountResponse;
+import nmtt.demo.dto.request.Account.AccountCreationRequest;
+import nmtt.demo.dto.request.Account.AccountUpdateRequest;
+import nmtt.demo.dto.request.Account.ApiResponse;
+import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.service.AccountService;
+import nmtt.demo.service.EmailSenderService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -28,7 +30,6 @@ public class AccountController {
     ApiResponse<List<AccountResponse>> getAllUsers() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        log.info("Username: {}", authentication.getName());
         authentication.getAuthorities()
                 .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
 
@@ -58,8 +59,26 @@ public class AccountController {
     }
 
     @DeleteMapping("/{userId}")
-    public String deleteAccountById(@PathVariable("userId") String userId){
+    public ApiResponse<String> deleteAccountById(@PathVariable("userId") String userId){
         accountService.deleteUserById(userId);
-        return "Account has been deleted";
+        return ApiResponse.<String>builder().result("Account has been deleted").build();
+    }
+
+    @PostMapping("/resetPass")
+    public ApiResponse<String> resetPass(@RequestParam String email){
+        accountService.resetPass(email);
+        return ApiResponse.<String>builder().result("New password has been send your email").build();
+    }
+
+    @PostMapping("/requestChangeMail")
+    public ApiResponse<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
+        accountService.requestChangeMail(accountId, newEmail);
+        return ApiResponse.<String>builder().result("Verification code has been sent to the new email").build();
+    }
+
+    @PostMapping("/verifyChangeMail")
+    public ApiResponse<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
+        accountService.verifyChangeMail(accountId, verificationCode);
+        return ApiResponse.<String>builder().result("Email has been successfully updated").build();
     }
 }

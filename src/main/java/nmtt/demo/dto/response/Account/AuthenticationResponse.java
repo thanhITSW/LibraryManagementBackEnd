@@ -1,4 +1,4 @@
-package nmtt.demo.dto.request;
+package nmtt.demo.dto.response.Account;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
@@ -10,6 +10,7 @@ import lombok.experimental.FieldDefaults;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class IntrospectRequest {
+public class AuthenticationResponse {
     String token;
+    boolean authenticated;
 }

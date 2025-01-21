@@ -15,7 +15,11 @@ public enum ErrorCode {
     INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
     PASSWORD_INVALID(1003, "Password must be at least 5 characters", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1004, "Uncauthenticated", HttpStatus.UNAUTHORIZED),
-    UNAUTHORIZED(1005, "You do not have permission", HttpStatus.FORBIDDEN)
+    UNAUTHORIZED(1005, "You do not have permission", HttpStatus.FORBIDDEN),
+    BOOK_EXISTED(1002, "Book existed", HttpStatus.BAD_REQUEST),
+    INVALID_CSV_FORMAT(1006, "Book existed", HttpStatus.BAD_REQUEST),
+    CSV_IMPORT_FAILED(1007, "Book existed", HttpStatus.BAD_REQUEST),
+    INVALID_VERIFICATION_CODE(1007, "Invalid verification code", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

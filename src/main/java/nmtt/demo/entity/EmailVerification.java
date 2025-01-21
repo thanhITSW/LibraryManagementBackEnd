@@ -1,12 +1,12 @@
 package nmtt.demo.entity;
 
-import jakarta.persistence.*;
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
 import jakarta.validation.constraints.Email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
-
-import java.time.LocalDate;
-import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -14,18 +14,12 @@ import java.util.Set;
 @Entity
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Account {
+public class EmailVerification {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
+    String accountId;
     @Email
-    String email;
-    String password;
-    String firstName;
-    LocalDate dob;
-    String lastName;
-
-    @ManyToMany
-    Set<Role> roles;
-    boolean active;
+    String newEmail;
+    String verificationCode;
 }

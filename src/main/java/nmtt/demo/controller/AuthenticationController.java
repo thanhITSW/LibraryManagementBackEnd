@@ -4,14 +4,11 @@ import com.nimbusds.jose.JOSEException;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
-import nmtt.demo.dto.request.*;
-import nmtt.demo.dto.response.AuthenticationResponse;
-import nmtt.demo.dto.response.IntrospectResponse;
+import nmtt.demo.dto.request.Account.*;
+import nmtt.demo.dto.response.Account.AuthenticationResponse;
+import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.service.AuthenticationService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
 
@@ -50,5 +47,11 @@ public class AuthenticationController {
         authenticationService.logout(request);
         return ApiResponse.<Void>builder()
                 .build();
+    }
+
+    @GetMapping("/{accountId}")
+    public ApiResponse<String> activeAccount(@PathVariable("accountId") String accountId){
+        authenticationService.activeAccount(accountId);
+        return ApiResponse.<String>builder().result("Active account successfully").build();
     }
 }

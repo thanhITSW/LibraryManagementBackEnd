@@ -1,4 +1,4 @@
-package nmtt.demo.dto.request;
+package nmtt.demo.dto.request.Account;
 
 import lombok.Data;
 
@@ -13,4 +13,5 @@ public class AccountUpdateRequest {
     LocalDate dob;
     String lastName;
     List<String> roles;
+    boolean active;
 }

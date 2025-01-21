@@ -1,4 +1,4 @@
-package nmtt.demo.dto.request;
+package nmtt.demo.dto.request.Account;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;

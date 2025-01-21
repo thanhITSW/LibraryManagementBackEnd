@@ -5,7 +5,7 @@ import java.util.Objects;
 import javax.crypto.spec.SecretKeySpec;
 
 import lombok.RequiredArgsConstructor;
-import nmtt.demo.dto.request.IntrospectRequest;
+import nmtt.demo.dto.request.Account.IntrospectRequest;
 import nmtt.demo.service.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
