@@ -28,4 +28,6 @@ public class Account {
     @ManyToMany
     Set<Role> roles;
     boolean active;
+    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Borrowing> borrowings;
 }

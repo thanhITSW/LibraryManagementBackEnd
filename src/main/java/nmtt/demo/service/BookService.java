@@ -1,5 +1,6 @@
 package nmtt.demo.service;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -29,6 +30,7 @@ public class BookService {
     BookRepository bookRepository;
     BookMapper bookMapper;
 
+    @Transactional
     public BookResponse createBook(BookCreationRequest request){
         if(bookRepository.existsByTitle(request.getTitle())){
             throw new AppException(ErrorCode.BOOK_EXISTED);
@@ -44,6 +46,7 @@ public class BookService {
                 .map(bookMapper::toBookResponse).toList();
     }
 
+    @Transactional
     public BookResponse updateBookById(String bookId, BookUpdateRequest request){
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -53,6 +56,7 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
+    @Transactional
     public void deleteBookById(String bookId){
         bookRepository.deleteById(bookId);
     }
@@ -68,6 +72,7 @@ public class BookService {
                 .toList();
     }
 
+    @Transactional
     public void importBooksFromCsv(MultipartFile file) {
 
         if (!file.getOriginalFilename().endsWith(".csv")) {

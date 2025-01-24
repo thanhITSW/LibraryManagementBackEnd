@@ -1,11 +1,10 @@
 package nmtt.demo.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
+
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -25,4 +24,7 @@ public class Book {
 
     @Builder.Default
     boolean available = true;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private Set<Borrowing> borrowings;
 }

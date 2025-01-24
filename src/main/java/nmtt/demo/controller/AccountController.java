@@ -9,9 +9,15 @@ import nmtt.demo.dto.request.Account.AccountCreationRequest;
 import nmtt.demo.dto.request.Account.AccountUpdateRequest;
 import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.response.Account.AccountResponse;
+import nmtt.demo.entity.Account;
+import nmtt.demo.service.AccountSearchSpecification;
 import nmtt.demo.service.AccountService;
 import nmtt.demo.service.EmailSenderService;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -80,5 +86,17 @@ public class AccountController {
     public ApiResponse<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
         accountService.verifyChangeMail(accountId, verificationCode);
         return ApiResponse.<String>builder().result("Email has been successfully updated").build();
+    }
+
+    @GetMapping("/search")
+    public Page<AccountResponse> searchUsers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String bookTitle,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return accountService.searchMember(name, bookTitle, dateFrom, dateTo, page,size);
     }
 }

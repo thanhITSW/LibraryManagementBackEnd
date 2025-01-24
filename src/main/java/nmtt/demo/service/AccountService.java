@@ -1,5 +1,6 @@
 package nmtt.demo.service;
 
+import jakarta.transaction.Transactional;
 import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
@@ -17,6 +18,10 @@ import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.EmailVerificationRepository;
 import nmtt.demo.repository.RoleRepository;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.prepost.PostAuthorize;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -40,6 +45,7 @@ public class AccountService {
     @Value("${URL_API}")
     String urlApi;
 
+    @Transactional
     public AccountResponse createAccount(AccountCreationRequest request){
 
         if(accountRepository.existsByEmail(request.getEmail())){
@@ -77,6 +83,7 @@ public class AccountService {
         return accountMapper.toAccountResponse(account);
     }
 
+    @Transactional
     public AccountResponse updateAccountById(String accountId, AccountUpdateRequest request){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found") );;
@@ -89,6 +96,7 @@ public class AccountService {
         return accountMapper.toAccountResponse(accountRepository.save(account));
     }
 
+    @Transactional
     public void deleteUserById(String accountId){
         accountRepository.deleteById(accountId);
     }
@@ -142,5 +150,28 @@ public class AccountService {
         String subject = "Email Changed Successfully";
         String message = "Your email address has been successfully updated.";
         emailSenderService.sendSimpleEmail(account.getEmail(), subject, message);
+    }
+
+    public Page<AccountResponse> searchMember(
+            String name,
+            String bookTitle,
+            String dateFrom,
+            String dateTo,
+            int page,
+            int size) {
+
+        // Tạo Pageable cho phân trang
+        Pageable pageable = PageRequest.of(page, size);
+
+        // Sử dụng Specification để tìm kiếm
+        Specification<Account> spec = Specification.where(AccountSearchSpecification.hasName(name))
+                .and(AccountSearchSpecification.hasBookTitle(bookTitle))
+                .and(AccountSearchSpecification.isBornInDateRange(dateFrom, dateTo));
+
+        // Lấy kết quả tìm kiếm với phân trang
+        Page<Account> accounts = accountRepository.findAll(spec, pageable);
+
+        // Map kết quả thành đối tượng Response
+        return accounts.map(accountMapper::toAccountResponse);
     }
 }

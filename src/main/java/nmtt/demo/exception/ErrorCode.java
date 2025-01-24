@@ -17,9 +17,13 @@ public enum ErrorCode {
     UNAUTHENTICATED(1004, "Uncauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1005, "You do not have permission", HttpStatus.FORBIDDEN),
     BOOK_EXISTED(1002, "Book existed", HttpStatus.BAD_REQUEST),
-    INVALID_CSV_FORMAT(1006, "Book existed", HttpStatus.BAD_REQUEST),
-    CSV_IMPORT_FAILED(1007, "Book existed", HttpStatus.BAD_REQUEST),
+    INVALID_CSV_FORMAT(1006, "INVALID_CSV_FORMAT", HttpStatus.BAD_REQUEST),
+    CSV_IMPORT_FAILED(1007, "CSV_IMPORT_FAILED", HttpStatus.BAD_REQUEST),
     INVALID_VERIFICATION_CODE(1007, "Invalid verification code", HttpStatus.BAD_REQUEST),
+    BOOK_NOT_EXISTED(1008, "BOOK_NOT_EXISTED", HttpStatus.BAD_REQUEST),
+    BORROWED_BOOK(1009, "You have already borrowed this book!", HttpStatus.BAD_REQUEST),
+    NOT_AVAILABLE_BOOK(1009, "No copies of the book are available!", HttpStatus.BAD_REQUEST),
+    BORROW_RECORD_NOT_FOUND(1009, "No borrowing record found for this user and book!", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
