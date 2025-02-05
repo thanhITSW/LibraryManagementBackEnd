@@ -1,4 +1,4 @@
-package nmtt.demo.configuration;
+package nmtt.demo.components;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;

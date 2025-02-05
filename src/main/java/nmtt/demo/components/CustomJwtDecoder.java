@@ -1,4 +1,4 @@
-package nmtt.demo.configuration;
+package nmtt.demo.components;
 
 import java.text.ParseException;
 import java.util.Objects;

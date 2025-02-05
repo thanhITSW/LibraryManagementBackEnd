@@ -1,8 +1,10 @@
 package nmtt.demo.exception;
 
 import nmtt.demo.dto.request.Account.ApiResponse;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -62,5 +64,12 @@ public class GlobalExceptionHandler {
         apiResponse.setMessage(errorCode.getMessage());
 
         return ResponseEntity.badRequest().body(apiResponse);
+    }
+
+    @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<String> handleMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
+        String errorMessage = "HTTP method " + ex.getMethod() + " is not supported for this endpoint. Supported methods are: "
+                + ex.getSupportedHttpMethods();
+        return new ResponseEntity<>(errorMessage, HttpStatus.METHOD_NOT_ALLOWED);
     }
 }
