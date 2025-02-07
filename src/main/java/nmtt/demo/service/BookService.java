@@ -13,6 +13,7 @@ import nmtt.demo.exception.AppException;
 import nmtt.demo.exception.ErrorCode;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -31,6 +32,7 @@ public class BookService {
     BookMapper bookMapper;
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public BookResponse createBook(BookCreationRequest request){
         if(bookRepository.existsByTitle(request.getTitle())){
             throw new AppException(ErrorCode.BOOK_EXISTED);
@@ -41,12 +43,14 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
     public List<BookResponse> getAllBook(){
         return bookRepository.findAll().stream()
                 .map(bookMapper::toBookResponse).toList();
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public BookResponse updateBookById(String bookId, BookUpdateRequest request){
         Book book = bookRepository.findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
@@ -57,6 +61,7 @@ public class BookService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void deleteBookById(String bookId){
         bookRepository.deleteById(bookId);
     }
@@ -73,6 +78,7 @@ public class BookService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public void importBooksFromCsv(MultipartFile file) {
 
         if (!file.getOriginalFilename().endsWith(".csv")) {

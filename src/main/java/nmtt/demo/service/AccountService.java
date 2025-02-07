@@ -101,6 +101,7 @@ public class AccountService {
         accountRepository.deleteById(accountId);
     }
 
+    @PreAuthorize("hasRole('USER')")
     public void resetPass(String email){
         Account account = accountRepository.findAccountByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -116,6 +117,7 @@ public class AccountService {
         emailSenderService.sendSimpleEmail(email, subject, message);
     }
 
+    @PreAuthorize("hasRole('USER')")
     public void requestChangeMail(String accountId, String newEmail) {
         accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -135,6 +137,7 @@ public class AccountService {
         emailSenderService.sendSimpleEmail(newEmail, subject, message);
     }
 
+    @PreAuthorize("hasRole('USER')")
     public void verifyChangeMail(String accountId, String verificationCode) {
         EmailVerification verification = emailVerificationRepository.findByAccountIdAndVerificationCode(accountId, verificationCode)
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_VERIFICATION_CODE));

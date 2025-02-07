@@ -13,6 +13,7 @@ import nmtt.demo.exception.ErrorCode;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.BookRepository;
 import nmtt.demo.repository.BorrowingRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -27,6 +28,7 @@ public class BorrowingService {
     BookRepository bookRepository;
 
     @Transactional
+    @PreAuthorize("hasRole('USER')")
     public void borrowBook(String accountId, String bookId){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -59,6 +61,7 @@ public class BorrowingService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('USER')")
     public void returnBook(String accountId, String bookId){
         Borrowing borrowing = borrowingRepository.findByAccountIdAndBookIdAndReturnedFalse(accountId, bookId)
                 .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
