@@ -43,7 +43,6 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
-    @PreAuthorize("hasRole('ADMIN')")
     public List<BookResponse> getAllBook(){
         return bookRepository.findAll().stream()
                 .map(bookMapper::toBookResponse).toList();

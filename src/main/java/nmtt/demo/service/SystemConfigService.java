@@ -7,6 +7,7 @@ import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.entity.SystemConfig;
 import nmtt.demo.repository.SystemConfigRepository;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -26,6 +27,7 @@ public class SystemConfigService {
     }
 
     @Transactional
+    @PreAuthorize("hasRole('ADMIN')")
     public SystemConfig updateMaintenanceMode(boolean maintenanceMode) {
         SystemConfig config = getConfig();
         config.setMaintenanceMode(maintenanceMode);

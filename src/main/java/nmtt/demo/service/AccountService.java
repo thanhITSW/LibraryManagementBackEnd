@@ -101,7 +101,6 @@ public class AccountService {
         accountRepository.deleteById(accountId);
     }
 
-    @PreAuthorize("hasRole('USER')")
     public void resetPass(String email){
         Account account = accountRepository.findAccountByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

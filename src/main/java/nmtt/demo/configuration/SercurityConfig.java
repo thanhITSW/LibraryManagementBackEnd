@@ -22,11 +22,25 @@ import org.springframework.security.web.SecurityFilterChain;
 public class SercurityConfig {
 
     private final String[] PUBLIC_ENDPOINTS = {
-            "/accounts", "/accounts/resetPass", "/auth/login", "/auth/introspect", "/auth/logout", "/auth/refresh"
+            "/accounts",
+            "/accounts/resetPass",
+            "/auth/login",
+            "/auth/introspect",
+            "/auth/logout",
+            "/auth/refresh",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/v3/api-docs",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
     private final String[] PUBLIC_ENDPOINTS_GET = {
-            "/auth/**"
+            "/auth/**",
+            "/swagger-ui/**",
+            "/v3/api-docs/**",
+            "/swagger-resources/**",
+            "/webjars/**"
     };
 
     private final CustomJwtDecoder customJwtDecoder;
