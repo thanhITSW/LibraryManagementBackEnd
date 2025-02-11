@@ -1,9 +1,10 @@
-package nmtt.demo.dto.response;
+package nmtt.demo.dto.response.Account;
 
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
 import java.time.LocalDate;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -12,9 +13,11 @@ import java.time.LocalDate;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class AccountResponse {
     String id;
-    String username;
+    String email;
     String firstName;
     String lastName;
     LocalDate dob;
-    String role;
+    Set<RoleResponse> roles;
+    boolean active;
+
 }

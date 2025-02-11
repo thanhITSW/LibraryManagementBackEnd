@@ -1,11 +1,9 @@
 package nmtt.demo.entity;
 
 import jakarta.persistence.*;
-import jakarta.validation.constraints.Email;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 @Data
@@ -14,20 +12,19 @@ import java.util.Set;
 @Entity
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class Account {
+public class Book {
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     String id;
-    @Email
-    String email;
-    String password;
-    String firstName;
-    LocalDate dob;
-    String lastName;
+    String title;
+    String author;
+    String category;
+    int totalCopies;
+    int availableCopies;
 
-    @ManyToMany
-    Set<Role> roles;
-    boolean active;
-    @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Builder.Default
+    boolean available = true;
+
+    @OneToMany(mappedBy = "book", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private Set<Borrowing> borrowings;
 }

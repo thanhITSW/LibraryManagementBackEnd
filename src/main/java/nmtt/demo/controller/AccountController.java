@@ -1,44 +1,62 @@
 package nmtt.demo.controller;
 
 import jakarta.validation.Valid;
-import nmtt.demo.dto.request.AccountCreationRequest;
-import nmtt.demo.dto.request.AccountUpdateRequest;
-import nmtt.demo.dto.request.ApiResponse;
-import nmtt.demo.dto.response.AccountResponse;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
+import lombok.experimental.FieldDefaults;
+import lombok.extern.slf4j.Slf4j;
+import nmtt.demo.dto.request.Account.AccountCreationRequest;
+import nmtt.demo.dto.request.Account.AccountUpdateRequest;
+import nmtt.demo.dto.request.Account.ApiResponse;
+import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.entity.Account;
+import nmtt.demo.service.AccountSearchSpecification;
 import nmtt.demo.service.AccountService;
-import org.springframework.beans.factory.annotation.Autowired;
+import nmtt.demo.service.EmailSenderService;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/accounts")
+@Slf4j
+@RequiredArgsConstructor
+@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccountController {
 
-    @Autowired
     AccountService accountService;
 
-    public AccountController(AccountService accountService) {
-        this.accountService = accountService;
-    }
-
     @GetMapping
-    public List<Account> getAllUsers() {
-        return accountService.getAccount();
+    ApiResponse<List<AccountResponse>> getAllUsers() {
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
+
+        authentication.getAuthorities()
+                .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
+
+        return ApiResponse.<List<AccountResponse>>builder()
+                .result(accountService.getAccount())
+                .build();
     }
 
     @PostMapping
-    public ApiResponse<Account> createAccount(@RequestBody @Valid AccountCreationRequest request){
-        ApiResponse<Account> apiResponse = new ApiResponse<>();
+    public ApiResponse<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request){
+        ApiResponse<AccountResponse> apiResponse = new ApiResponse<>();
 
-        apiResponse.setResult(accountService.createRequest(request));
+        apiResponse.setResult(accountService.createAccount(request));
         return apiResponse;
     }
 
-    @GetMapping("/{userId}")
-    public Account getAccountById(@PathVariable("userId") String userId){
-        return accountService.getAccountById(userId);
+    @GetMapping("/myInfo")
+    ApiResponse<AccountResponse> getMyInfo(){
+        return ApiResponse.<AccountResponse>builder()
+                .result(accountService.getMyInfo())
+                .build();
     }
 
     @PutMapping("/{userId}")
@@ -47,8 +65,38 @@ public class AccountController {
     }
 
     @DeleteMapping("/{userId}")
-    public String deleteAccountById(@PathVariable("userId") String userId){
+    public ApiResponse<String> deleteAccountById(@PathVariable("userId") String userId){
         accountService.deleteUserById(userId);
-        return "Account has been deleted";
+        return ApiResponse.<String>builder().result("Account has been deleted").build();
+    }
+
+    @PostMapping("/resetPass")
+    public ApiResponse<String> resetPass(@RequestParam String email){
+        accountService.resetPass(email);
+        return ApiResponse.<String>builder().result("New password has been send your email").build();
+    }
+
+    @PostMapping("/requestChangeMail")
+    public ApiResponse<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
+        accountService.requestChangeMail(accountId, newEmail);
+        return ApiResponse.<String>builder().result("Verification code has been sent to the new email").build();
+    }
+
+    @PostMapping("/verifyChangeMail")
+    public ApiResponse<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
+        accountService.verifyChangeMail(accountId, verificationCode);
+        return ApiResponse.<String>builder().result("Email has been successfully updated").build();
+    }
+
+    @GetMapping("/search")
+    public Page<AccountResponse> searchUsers(
+            @RequestParam(required = false) String name,
+            @RequestParam(required = false) String bookTitle,
+            @RequestParam(required = false) String dateFrom,
+            @RequestParam(required = false) String dateTo,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size) {
+
+        return accountService.searchMember(name, bookTitle, dateFrom, dateTo, page,size);
     }
 }
