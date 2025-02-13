@@ -1,4 +1,4 @@
-package nmtt.demo.service;
+package nmtt.demo.service.account;
 
 import jakarta.persistence.criteria.Predicate;
 import nmtt.demo.entity.Account;

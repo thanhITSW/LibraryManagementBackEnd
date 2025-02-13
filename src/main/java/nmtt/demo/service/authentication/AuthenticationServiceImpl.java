@@ -1,14 +1,11 @@
-package nmtt.demo.service;
+package nmtt.demo.service.authentication;
 
 import com.nimbusds.jose.*;
 import com.nimbusds.jose.crypto.MACSigner;
 import com.nimbusds.jose.crypto.MACVerifier;
 import com.nimbusds.jwt.JWTClaimsSet;
 import com.nimbusds.jwt.SignedJWT;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import lombok.experimental.NonFinal;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AuthenticationRequest;
 import nmtt.demo.dto.request.Account.IntrospectRequest;
@@ -18,8 +15,8 @@ import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.InvalidatedToken;
+import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
-import nmtt.demo.exception.ErrorCode;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.InvalidatedTokenRepository;
 import org.springframework.beans.factory.annotation.Value;
@@ -37,30 +34,36 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class AuthenticationService {
-    AccountRepository accountRepository;
-    InvalidatedTokenRepository invalidatedTokenRepository;
+public class AuthenticationServiceImpl implements AuthenticationService{
+    private final AccountRepository accountRepository;
+    private final InvalidatedTokenRepository invalidatedTokenRepository;
 
-    @NonFinal
     @Value("${SIGNER_KEY}")
-    protected String SIGNER_KEY;
+    private String SIGNER_KEY;
 
-    @NonFinal
     @Value("${refreshable-duration}")
-    protected long REFRESHABLE_DURATION;
+    private long REFRESHABLE_DURATION;
 
-    @NonFinal
     @Value("${valid-duration}")
-    protected long VALID_DURATION;
+    private long VALID_DURATION;
 
+    /**
+     * Authenticates a user based on the provided email and password.
+     *
+     * @param request The authentication request containing the user's email and password.
+     * @return An AuthenticationResponse containing the authentication token if successful, or a message indicating the account is not activated.
+     * @throws AppException If the user does not exist or if the password does not match.
+     */
+    @Override
     public AuthenticationResponse authenticate(AuthenticationRequest request){
-        var account = accountRepository.findAccountByEmail(request.getEmail())
+        var account = accountRepository
+                .findAccountByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-        boolean authenticated =  passwordEncoder.matches(request.getPassword(), account.getPassword());
+        boolean authenticated =  passwordEncoder
+                .matches(request.getPassword(), account.getPassword());
 
         if(!authenticated){
             throw new AppException(ErrorCode.UNAUTHENTICATED);
@@ -70,9 +73,9 @@ public class AuthenticationService {
 
         return account.isActive() ?
                 AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(authenticated)
-                .build() :
+                        .token(token)
+                        .authenticated(authenticated)
+                        .build() :
                 AuthenticationResponse.builder()
                         .token("Tài khoản của bạn chưa được kích hoạt")
                         .authenticated(false)
@@ -80,6 +83,14 @@ public class AuthenticationService {
                 ;
     }
 
+    /**
+     * Logs out a user by invalidating the provided token.
+     *
+     * @param request The logout request containing the token to be invalidated.
+     * @throws ParseException If there is an error while parsing the token.
+     * @throws JOSEException If there is an error during the token verification process.
+     */
+    @Override
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
         try {
             var signToken = verifyToken(request.getToken(), true);
@@ -88,7 +99,10 @@ public class AuthenticationService {
             Date expiryTime = signToken.getJWTClaimsSet().getExpirationTime();
 
             InvalidatedToken invalidatedToken =
-                    InvalidatedToken.builder().id(jit).expiryTime(expiryTime).build();
+                    InvalidatedToken.builder()
+                            .id(jit)
+                            .expiryTime(expiryTime)
+                            .build();
 
             invalidatedTokenRepository.save(invalidatedToken);
         } catch (AppException exception) {
@@ -96,6 +110,17 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     * Verifies a JWT token, ensuring it is valid and not expired.
+     * Optionally checks if the token is a refresh token with a customizable expiration duration.
+     *
+     * @param token The JWT token to be verified.
+     * @param isRefresh A flag indicating if the token is a refresh token.
+     * @return The verified SignedJWT if valid.
+     * @throws JOSEException If there is an error during the verification process.
+     * @throws ParseException If there is an error while parsing the token.
+     * @throws AppException If the token is invalid, expired, or has been invalidated.
+     */
     private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
@@ -124,6 +149,16 @@ public class AuthenticationService {
         return signedJWT;
     }
 
+    /**
+     * Refreshes the JWT token for a user by verifying the provided token, invalidating it, and generating a new one.
+     *
+     * @param request The refresh request containing the token to be refreshed.
+     * @return An AuthenticationResponse containing the new token and authentication status.
+     * @throws ParseException If there is an error while parsing the token.
+     * @throws JOSEException If there is an error during the token verification process.
+     * @throws AppException If the token is invalid or the user is not found.
+     */
+    @Override
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
         var signedJWT = verifyToken(request.getToken(), true);
 
@@ -131,22 +166,35 @@ public class AuthenticationService {
         var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
 
         InvalidatedToken invalidatedToken =
-                InvalidatedToken.builder().id(jit).expiryTime(expiryTime).build();
+                InvalidatedToken.builder()
+                        .id(jit)
+                        .expiryTime(expiryTime)
+                        .build();
 
         invalidatedTokenRepository.save(invalidatedToken);
 
         var email = signedJWT.getJWTClaimsSet().getSubject();
 
-        var user =
-                accountRepository.findAccountByEmail(email)
+        var user = accountRepository
+                        .findAccountByEmail(email)
                         .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
         var token = generateToken(user);
 
-        return AuthenticationResponse.builder().token(token).authenticated(true).build();
+        return AuthenticationResponse.builder()
+                .token(token)
+                .authenticated(true)
+                .build();
     }
 
-    private String  generateToken(Account account){
+    /**
+     * Generates a new JWT token for the specified account.
+     *
+     * @param account The account for which the token is to be generated.
+     * @return The generated JWT token as a string.
+     * @throws RuntimeException If there is an error while generating the token.
+     */
+    private String generateToken(Account account){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -154,7 +202,9 @@ public class AuthenticationService {
                 .issuer("nmtt.com")
                 .issueTime(new Date())
                 .expirationTime(new Date(
-                        Instant.now().plus(VALID_DURATION, ChronoUnit.SECONDS).toEpochMilli()
+                        Instant.now()
+                                .plus(VALID_DURATION, ChronoUnit.SECONDS)
+                                .toEpochMilli()
                 ))
                 .jwtID(UUID.randomUUID().toString())
                 .claim("scope", buildScope(account))
@@ -173,6 +223,15 @@ public class AuthenticationService {
         }
     }
 
+    /**
+     * Introspects a given token to check if it is valid.
+     *
+     * @param request The request containing the token to be introspected.
+     * @return An IntrospectResponse indicating whether the token is valid.
+     * @throws JOSEException If there is an error during the token verification process.
+     * @throws ParseException If there is an error while parsing the token.
+     */
+    @Override
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
         boolean invalid = true;
@@ -187,6 +246,12 @@ public class AuthenticationService {
                 .build();
     }
 
+    /**
+     * Builds a scope string for the given account based on its roles and permissions.
+     *
+     * @param account The account for which the scope is to be built.
+     * @return A string representing the account's roles and permissions in the scope.
+     */
     private String buildScope(Account account){
         StringJoiner stringJoiner = new StringJoiner("");
         if(!CollectionUtils.isEmpty(account.getRoles())){
@@ -204,6 +269,13 @@ public class AuthenticationService {
         return stringJoiner.toString();
     }
 
+    /**
+     * Activates the account with the specified account ID.
+     *
+     * @param accountId The ID of the account to be activated.
+     * @throws AppException If the account with the given ID does not exist.
+     */
+    @Override
     public void activeAccount(String accountId){
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));

@@ -1,19 +1,17 @@
-package nmtt.demo.service;
+package nmtt.demo.service.book;
 
 import jakarta.transaction.Transactional;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Book.BookCreationRequest;
 import nmtt.demo.dto.request.Book.BookUpdateRequest;
 import nmtt.demo.dto.response.Book.BookResponse;
 import nmtt.demo.entity.Book;
+import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
-import nmtt.demo.exception.ErrorCode;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
-import org.springframework.security.access.prepost.PreAuthorize;
+import nmtt.demo.service.cloudinary.CloudinaryService;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -25,15 +23,21 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 @Slf4j
-public class BookService {
-    BookRepository bookRepository;
-    BookMapper bookMapper;
-    CloudinaryService cloudinaryService;
+public class BookServiceImpl implements BookService{
+    private final BookRepository bookRepository;
+    private final BookMapper bookMapper;
+    private final CloudinaryService cloudinaryService;
 
+    /**
+     * Creates a new book with the provided details.
+     *
+     * @param request The request containing the details of the book to be created.
+     * @return A response containing the details of the created book.
+     * @throws AppException If a book with the same title already exists.
+     */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @Override
     public BookResponse createBook(BookCreationRequest request){
         if(bookRepository.existsByTitle(request.getTitle())){
             throw new AppException(ErrorCode.BOOK_EXISTED);
@@ -44,15 +48,30 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
+    /**
+     * Retrieves all books from the repository.
+     *
+     * @return A list of responses containing details of all books.
+     */
+    @Override
     public List<BookResponse> getAllBook(){
         return bookRepository.findAll().stream()
                 .map(bookMapper::toBookResponse).toList();
     }
 
+    /**
+     * Updates the details of a book by its ID.
+     *
+     * @param bookId The ID of the book to be updated.
+     * @param request The request containing the updated details of the book.
+     * @return A response containing the updated details of the book.
+     * @throws RuntimeException If the book with the given ID is not found.
+     */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @Override
     public BookResponse updateBookById(String bookId, BookUpdateRequest request){
-        Book book = bookRepository.findById(bookId)
+        Book book = bookRepository
+                .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
         bookMapper.updateBook(book, request);
@@ -60,17 +79,31 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
+    /**
+     * Deletes a book by its ID, including its associated image.
+     *
+     * @param bookId The ID of the book to be deleted.
+     */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @Override
     public void deleteBookById(String bookId){
         deleteBookImage(bookId);
         bookRepository.deleteById(bookId);
     }
 
+    /**
+     * Searches for books by keyword. The search checks if the title, author, or category contains the keyword.
+     *
+     * @param keyword The keyword to search for in the book's title, author, or category.
+     * @return A list of {@link BookResponse} that match the search criteria.
+     */
+    @Override
     public List<BookResponse> searchBooks(String keyword) {
         String lowerKeyword = keyword.toLowerCase();
 
-        return bookRepository.findAll().stream()
+        return bookRepository
+                .findAll().
+                stream()
                 .filter(book -> book.getTitle().toLowerCase().contains(lowerKeyword) ||
                         book.getAuthor().toLowerCase().contains(lowerKeyword) ||
                         book.getCategory().toLowerCase().contains(lowerKeyword))
@@ -78,8 +111,16 @@ public class BookService {
                 .toList();
     }
 
+    /**
+     * Imports books from a CSV file. The method reads the file, processes each line (skipping the header),
+     * and saves the book data into the repository. The CSV file must contain at least 5 columns: title, author,
+     * category, totalCopies, and availableCopies.
+     *
+     * @param file The CSV file containing the book data.
+     * @throws AppException If the file is not in CSV format, the data is invalid, or the import fails.
+     */
     @Transactional
-    @PreAuthorize("hasRole('ADMIN')")
+    @Override
     public void importBooksFromCsv(MultipartFile file) {
 
         if (!file.getOriginalFilename().endsWith(".csv")) {
@@ -88,7 +129,7 @@ public class BookService {
 
         try (BufferedReader reader = new BufferedReader(
                 new InputStreamReader(file.getInputStream()
-                , StandardCharsets.UTF_8))) {
+                        , StandardCharsets.UTF_8))) {
 
             List<Book> books = new ArrayList<>();
             String line;
@@ -118,11 +159,24 @@ public class BookService {
         }
     }
 
+    /**
+     * Updates the image of a book. The method first checks if the book has an existing image.
+     * If so, it deletes the image from Cloudinary. Then, it updates the book's image URL and public ID in the database.
+     *
+     * @param bookId The ID of the book whose image needs to be updated.
+     * @param imageUrl The new image URL.
+     * @param publicId The new image public ID from Cloudinary.
+     * @return The updated book response with the new image information.
+     * @throws RuntimeException If the book is not found, or the image deletion from Cloudinary fails.
+     */
     @Transactional
+    @Override
     public BookResponse updateBookImage(String bookId, String imageUrl, String publicId) {
-        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
+        Book book = bookRepository
+                .findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        // Xóa ảnh cũ trên Cloudinary (nếu có)
+        // delete image on Cloudinary if have
         if (book.getImagePublicId() != null) {
             try {
                 cloudinaryService.deleteFile(book.getImagePublicId());
@@ -131,7 +185,7 @@ public class BookService {
             }
         }
 
-        // Cập nhật ảnh mới vào database
+        // update image in database
         book.setImageUrl(imageUrl);
         book.setImagePublicId(publicId);
         bookRepository.save(book);
@@ -139,18 +193,36 @@ public class BookService {
         return bookMapper.toBookResponse(bookRepository.save(book));
     }
 
-    //Lấy link ảnh của sách
+    /**
+     * Retrieves the image URL of a book by its ID.
+     *
+     * @param bookId The ID of the book.
+     * @return The image URL of the book if found, otherwise null.
+     */
+    @Override
     public String getBookImageUrl(String bookId) {
-        Book book = bookRepository.findById(bookId).orElse(null);
+        Book book = bookRepository
+                .findById(bookId)
+                .orElse(null);
+
         return book != null ? book.getImageUrl() : null;
     }
 
-    //Xóa ảnh sách
+    /**
+     * Deletes the image associated with a book by its ID.
+     * The image is removed from the Cloudinary service and the image data is cleared from the database.
+     *
+     * @param bookId The ID of the book whose image is to be deleted.
+     * @throws RuntimeException if the book is not found or the image deletion fails.
+     */
     @Transactional
+    @Override
     public void deleteBookImage(String bookId) {
-        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
+        Book book = bookRepository
+                .findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        // Xóa ảnh trên Cloudinary
+        // Delete image on Cloudinary
         if (book.getImagePublicId() != null) {
             try {
                 cloudinaryService.deleteFile(book.getImagePublicId());
@@ -159,7 +231,7 @@ public class BookService {
             }
         }
 
-        // Xóa dữ liệu ảnh trong DB
+        // Delete data in DB
         book.setImageUrl(null);
         book.setImagePublicId(null);
         bookRepository.save(book);
