@@ -1,10 +1,8 @@
 package nmtt.demo.controller;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.service.CloudinaryService;
+import nmtt.demo.service.cloudinary.CloudinaryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,9 +16,8 @@ import java.io.IOException;
 @RequestMapping("/api/files")
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class FileUploadController {
-    CloudinaryService cloudinaryService;
+    private final CloudinaryService cloudinaryService;
 
     @PostMapping("/upload/image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file,

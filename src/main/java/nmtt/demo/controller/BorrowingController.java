@@ -1,57 +1,51 @@
 package nmtt.demo.controller;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.entity.Book;
-import nmtt.demo.service.BorrowingService;
+import nmtt.demo.service.borrowing.BorrowingService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/borrowing")
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BorrowingController {
-    BorrowingService borrowingService;
+    private final BorrowingService borrowingService;
 
     @PostMapping("/borrow")
-    public ApiResponse<String> borrowBook(@RequestParam String accountId, @RequestParam String bookId) {
+    public ResponseEntity<?> borrowBook(@RequestParam String accountId, @RequestParam String bookId) {
         try {
             borrowingService.borrowBook(accountId, bookId);
-            return ApiResponse.<String>builder()
-                    .result("Book borrowed successfully!")
-                    .build();
+            return ResponseEntity.ok(Map.of("message", "Book borrowed successfully!"));
         } catch (IllegalArgumentException e) {
-            return ApiResponse.<String>builder()
-                    .result(e.getMessage())
-                    .build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @PostMapping("/return")
-    public ApiResponse<String> returnBook(@RequestParam String accountId, @RequestParam String bookId) {
+    public ResponseEntity<?> returnBook(@RequestParam String accountId, @RequestParam String bookId) {
         try {
             borrowingService.returnBook(accountId, bookId);
-            return ApiResponse.<String>builder()
-                    .result("Book returned successfully!")
-                    .build();
+            return ResponseEntity.ok(Map.of("message", "Book returned successfully!"));
         } catch (IllegalArgumentException e) {
-            return ApiResponse.<String>builder()
-                    .result(e.getMessage())
-                    .build();
+            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
         }
     }
 
     @GetMapping("/{accountId}/borrowed-books")
-    public ApiResponse<List<Book>> getBorrowedBooks(@PathVariable String accountId) {
-        return ApiResponse.<List<Book>>builder()
-                .result(borrowingService.getBorrowedBooks(accountId))
-                .build();
+    public ResponseEntity<?> getBorrowedBooks(@PathVariable String accountId) {
+        List<Book> borrowedBooks = borrowingService.getBorrowedBooks(accountId);
+
+        if (borrowedBooks.isEmpty()) {
+            return ResponseEntity.ok(Map.of("message", "No borrowed books found."));
+        }
+
+        return ResponseEntity.ok(borrowedBooks);
     }
 
 }

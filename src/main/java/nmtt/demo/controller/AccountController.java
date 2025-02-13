@@ -1,23 +1,15 @@
 package nmtt.demo.controller;
 
 import jakarta.validation.Valid;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AccountCreationRequest;
 import nmtt.demo.dto.request.Account.AccountUpdateRequest;
-import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.response.Account.AccountResponse;
-import nmtt.demo.entity.Account;
-import nmtt.demo.service.AccountSearchSpecification;
-import nmtt.demo.service.AccountService;
-import nmtt.demo.service.EmailSenderService;
-import org.springframework.beans.factory.annotation.Value;
+import nmtt.demo.service.account.AccountService;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
@@ -27,69 +19,76 @@ import java.util.List;
 @RequestMapping("/accounts")
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AccountController {
 
-    AccountService accountService;
+    private final AccountService accountService;
 
     @GetMapping
-    ApiResponse<List<AccountResponse>> getAllUsers() {
+    public ResponseEntity<List<AccountResponse>> getAllUsers() {
         var authentication = SecurityContextHolder.getContext().getAuthentication();
 
         authentication.getAuthorities()
                 .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
 
-        return ApiResponse.<List<AccountResponse>>builder()
-                .result(accountService.getAccount())
-                .build();
+        List<AccountResponse> accounts = accountService.getAccount();
+
+        return ResponseEntity.ok(accounts);
     }
+
 
     @PostMapping
-    public ApiResponse<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request){
-        ApiResponse<AccountResponse> apiResponse = new ApiResponse<>();
-
-        apiResponse.setResult(accountService.createAccount(request));
-        return apiResponse;
+    public ResponseEntity<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request) {
+        AccountResponse accountResponse = accountService.createAccount(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(accountResponse);
     }
 
-    @GetMapping("/myInfo")
-    ApiResponse<AccountResponse> getMyInfo(){
-        return ApiResponse.<AccountResponse>builder()
-                .result(accountService.getMyInfo())
-                .build();
+
+    @GetMapping("/my-info")
+    public ResponseEntity<AccountResponse> getMyInfo() {
+        AccountResponse accountResponse = accountService.getMyInfo();
+        return ResponseEntity.ok(accountResponse);
     }
+
 
     @PutMapping("/{userId}")
-    public AccountResponse updateAccountById(@PathVariable("userId") String userId, @RequestBody AccountUpdateRequest request){
-        return accountService.updateAccountById(userId, request);
+    public ResponseEntity<AccountResponse> updateAccountById(
+            @PathVariable("userId") String userId,
+            @RequestBody @Valid AccountUpdateRequest request) {
+
+        AccountResponse updatedAccount = accountService.updateAccountById(userId, request);
+        return ResponseEntity.ok(updatedAccount);
     }
 
     @DeleteMapping("/{userId}")
-    public ApiResponse<String> deleteAccountById(@PathVariable("userId") String userId){
+    public ResponseEntity<String> deleteAccountById(@PathVariable("userId") String userId){
         accountService.deleteUserById(userId);
-        return ApiResponse.<String>builder().result("Account has been deleted").build();
+
+        return ResponseEntity.ok("Account has been deleted");
     }
 
-    @PostMapping("/resetPass")
-    public ApiResponse<String> resetPass(@RequestParam String email){
+    @PostMapping("/reset-pass")
+    public ResponseEntity<String> resetPass(@RequestParam String email){
         accountService.resetPass(email);
-        return ApiResponse.<String>builder().result("New password has been send your email").build();
+
+        return ResponseEntity.ok("New password has been send your email");
     }
 
-    @PostMapping("/requestChangeMail")
-    public ApiResponse<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
+    @PostMapping("/request-changeMail")
+    public ResponseEntity<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
         accountService.requestChangeMail(accountId, newEmail);
-        return ApiResponse.<String>builder().result("Verification code has been sent to the new email").build();
+
+        return ResponseEntity.ok("Verification code has been sent to the new email");
     }
 
-    @PostMapping("/verifyChangeMail")
-    public ApiResponse<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
+    @PostMapping("/verify-changeMail")
+    public ResponseEntity<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
         accountService.verifyChangeMail(accountId, verificationCode);
-        return ApiResponse.<String>builder().result("Email has been successfully updated").build();
+
+        return ResponseEntity.ok("Email has been successfully updated");
     }
 
     @GetMapping("/search")
-    public Page<AccountResponse> searchUsers(
+    public ResponseEntity<Page<AccountResponse>> searchUsers(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String bookTitle,
             @RequestParam(required = false) String dateFrom,
@@ -97,6 +96,9 @@ public class AccountController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        return accountService.searchMember(name, bookTitle, dateFrom, dateTo, page,size);
+        Page<AccountResponse> responses = accountService.searchMember(name
+                , bookTitle, dateFrom, dateTo, page,size);
+
+        return ResponseEntity.ok(responses);
     }
 }

@@ -7,7 +7,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
 import nmtt.demo.dto.request.Account.ApiResponse;
-import nmtt.demo.exception.ErrorCode;
+import nmtt.demo.enums.ErrorCode;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;

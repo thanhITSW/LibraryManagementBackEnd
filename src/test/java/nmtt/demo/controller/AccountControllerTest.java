@@ -5,7 +5,7 @@ import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AccountCreationRequest;
 import nmtt.demo.dto.response.Account.AccountResponse;
-import nmtt.demo.service.AccountService;
+import nmtt.demo.service.account.AccountService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;

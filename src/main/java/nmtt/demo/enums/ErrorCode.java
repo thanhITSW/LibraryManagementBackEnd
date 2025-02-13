@@ -1,4 +1,4 @@
-package nmtt.demo.exception;
+package nmtt.demo.enums;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -13,8 +13,6 @@ public enum ErrorCode {
     USER_EXISTED(1002, "User existed", HttpStatus.BAD_REQUEST),
     USER_NOT_EXISTED(1002, "User not existed", HttpStatus.NOT_FOUND),
     INVALID_KEY(1001, "Uncategorized error", HttpStatus.BAD_REQUEST),
-    PASSWORD_INVALID(1003, "Password must be at least 5 characters", HttpStatus.BAD_REQUEST),
-    EMAIL_INVALID(1003, "Email invalid", HttpStatus.BAD_REQUEST),
     UNAUTHENTICATED(1004, "Uncauthenticated", HttpStatus.UNAUTHORIZED),
     UNAUTHORIZED(1005, "You do not have permission", HttpStatus.FORBIDDEN),
     BOOK_EXISTED(1002, "Book existed", HttpStatus.BAD_REQUEST),

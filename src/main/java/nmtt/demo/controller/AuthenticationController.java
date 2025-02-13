@@ -1,13 +1,14 @@
 package nmtt.demo.controller;
 
 import com.nimbusds.jose.JOSEException;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import nmtt.demo.dto.request.Account.*;
 import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
-import nmtt.demo.service.AuthenticationService;
+import nmtt.demo.service.authentication.AuthenticationService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.web.bind.annotation.*;
 
 import java.text.ParseException;
@@ -15,43 +16,43 @@ import java.text.ParseException;
 @RestController
 @RequestMapping("/auth")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class AuthenticationController {
-    AuthenticationService authenticationService;
+    private final AuthenticationService authenticationService;
+
     @PostMapping("/login")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request){
-        var result = authenticationService.authenticate(request);
-        return ApiResponse.<AuthenticationResponse>builder()
-                .result(result)
-                .build();
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+        try {
+            AuthenticationResponse authResponse = authenticationService.authenticate(request);
+            return ResponseEntity.ok(authResponse);
+        } catch (AuthenticationException e) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
     }
 
+
     @PostMapping("/introspect")
-    ApiResponse<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request) throws ParseException, JOSEException {
-        var result = authenticationService.introspect(request);
-        return ApiResponse.<IntrospectResponse>builder()
-                .result(result)
-                .build();
+    public ResponseEntity<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
+            throws ParseException, JOSEException {
+        IntrospectResponse result = authenticationService.introspect(request);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/refresh")
-    ApiResponse<AuthenticationResponse> authenticate(@RequestBody RefreshRequest request) throws ParseException, JOSEException {
-        var result = authenticationService.refreshToken(request);
-        return ApiResponse.<AuthenticationResponse>builder()
-                .result(result)
-                .build();
+    public ResponseEntity<AuthenticationResponse> refresh(@RequestBody RefreshRequest request)
+            throws ParseException, JOSEException {
+        AuthenticationResponse result = authenticationService.refreshToken(request);
+        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/logout")
-    ApiResponse<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
+    public ResponseEntity<Void> logout(@RequestBody LogoutRequest request) throws ParseException, JOSEException {
         authenticationService.logout(request);
-        return ApiResponse.<Void>builder()
-                .build();
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{accountId}")
-    public ApiResponse<String> activeAccount(@PathVariable("accountId") String accountId){
+    public ResponseEntity<String> activeAccount(@PathVariable("accountId") String accountId) {
         authenticationService.activeAccount(accountId);
-        return ApiResponse.<String>builder().result("Active account successfully").build();
+        return ResponseEntity.ok("Active account successfully");
     }
 }

@@ -13,6 +13,7 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Aspect
 @Slf4j
 public class AccountActivityLogger {
+
     //named pointcut
     @Pointcut("within(@org.springframework.web.bind.annotation.RestController *)")
     public void controllerMethods(){
@@ -25,13 +26,13 @@ public class AccountActivityLogger {
         String remoteAddress = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes())
                 .getRequest().getRemoteAddr();
 
-        log.info("Account activity started: " + methodName + ", IP address: " + remoteAddress);
+        log.info("Account activity started: {}, IP address: {}", methodName, remoteAddress);
 
-        //thực hiện method gốc
+        //implement origin method
         Object result = joinPoint.proceed();
 
-        //Ghi log sau khi thực hiện method
-        log.info("User activity finished: " + methodName);
+        //write log after implement method
+        log.info("User activity finished: {} ", methodName);
         return result;
     }
 }

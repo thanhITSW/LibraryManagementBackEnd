@@ -1,41 +1,37 @@
 package nmtt.demo.controller;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Account.PermissionRequest;
 import nmtt.demo.dto.response.Account.PermissionResponse;
-import nmtt.demo.service.PermissionService;
+import nmtt.demo.service.permission.PermissionService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
 
 import java.util.List;
 
 @RestController
 @RequestMapping("/permissions")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class PermissionController {
-    PermissionService permissionService;
+    private final PermissionService permissionService;
 
     @PostMapping
-    ApiResponse<PermissionResponse> create(@RequestBody PermissionRequest request){
-        return ApiResponse.<PermissionResponse>builder()
-                .result(permissionService.create(request))
-                .build();
+    public ResponseEntity<PermissionResponse> create(@RequestBody PermissionRequest request) {
+        PermissionResponse response = permissionService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping
-    ApiResponse<List<PermissionResponse>> getAll(){
-        return ApiResponse.<List<PermissionResponse>>builder()
-                .result(permissionService.getAll())
-                .build();
+    public ResponseEntity<List<PermissionResponse>> getAll() {
+        List<PermissionResponse> response = permissionService.getAll();
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{permission}")
-    ApiResponse<Void> delete(@PathVariable String permission){
+    public ResponseEntity<Void> delete(@PathVariable String permission) {
         permissionService.delete(permission);
-        return ApiResponse.<Void>builder()
-                .build();
+        return ResponseEntity.noContent().build();
     }
+
 }

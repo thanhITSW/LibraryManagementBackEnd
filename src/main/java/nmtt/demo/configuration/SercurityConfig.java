@@ -2,6 +2,7 @@ package nmtt.demo.configuration;
 
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.components.CustomJwtDecoder;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -21,27 +22,14 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SercurityConfig {
 
-    private final String[] PUBLIC_ENDPOINTS = {
-            "/accounts",
-            "/accounts/resetPass",
-            "/auth/login",
-            "/auth/introspect",
-            "/auth/logout",
-            "/auth/refresh",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/v3/api-docs",
-            "/swagger-resources/**",
-            "/webjars/**"
-    };
+    @Value("${security.public.endpoints.post}")
+    private String[] PUBLIC_ENDPOINTS;
 
-    private final String[] PUBLIC_ENDPOINTS_GET = {
-            "/auth/**",
-            "/swagger-ui/**",
-            "/v3/api-docs/**",
-            "/swagger-resources/**",
-            "/webjars/**"
-    };
+    @Value("${security.public.endpoints.get}")
+    private String[] PUBLIC_ENDPOINTS_GET;
+
+    @Value("${security.auth.endpoints.admin}")
+    private String[] AUTH_ENDPOINTS_ADMIN;
 
     private final CustomJwtDecoder customJwtDecoder;
 
@@ -50,6 +38,7 @@ public class SercurityConfig {
         httpSecurity.authorizeHttpRequests(request ->
                 request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
+                        .requestMatchers(AUTH_ENDPOINTS_ADMIN).hasRole("ADMIN")
                 .anyRequest()
                 .authenticated()
         );

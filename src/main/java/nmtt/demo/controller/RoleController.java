@@ -1,12 +1,11 @@
 package nmtt.demo.controller;
 
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
-import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Account.RoleRequest;
 import nmtt.demo.dto.response.Account.RoleResponse;
-import nmtt.demo.service.RoleService;
+import nmtt.demo.service.role.RoleService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -14,28 +13,24 @@ import java.util.List;
 @RestController
 @RequestMapping("/roles")
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class RoleController {
-    RoleService roleService;
+    private final RoleService roleService;
 
     @PostMapping
-    ApiResponse<RoleResponse> create(@RequestBody RoleRequest request){
-        return ApiResponse.<RoleResponse>builder()
-                .result(roleService.create(request))
-                .build();
+    public ResponseEntity<RoleResponse> create(@RequestBody RoleRequest request) {
+        RoleResponse roleResponse = roleService.create(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(roleResponse);
     }
 
     @GetMapping
-    ApiResponse<List<RoleResponse>> getAll(){
-        return ApiResponse.<List<RoleResponse>>builder()
-                .result(roleService.getAll())
-                .build();
+    public ResponseEntity<List<RoleResponse>> getAll() {
+        List<RoleResponse> roles = roleService.getAll();
+        return ResponseEntity.ok(roles);
     }
 
     @DeleteMapping("/{role}")
-    ApiResponse<Void> delete(@PathVariable String permission){
-        roleService.delete(permission);
-        return ApiResponse.<Void>builder()
-                .build();
+    public ResponseEntity<Void> delete(@PathVariable String role) {
+        roleService.delete(role);
+        return ResponseEntity.noContent().build(); // 204 No Content
     }
 }

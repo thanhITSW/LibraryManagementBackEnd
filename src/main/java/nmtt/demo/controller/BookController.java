@@ -1,19 +1,14 @@
 package nmtt.demo.controller;
 
 import jakarta.validation.Valid;
-import lombok.AccessLevel;
 import lombok.RequiredArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.dto.request.Account.AccountCreationRequest;
-import nmtt.demo.dto.request.Account.AccountUpdateRequest;
-import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Book.BookCreationRequest;
 import nmtt.demo.dto.request.Book.BookUpdateRequest;
-import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.dto.response.Book.BookResponse;
-import nmtt.demo.service.BookService;
-import nmtt.demo.service.CloudinaryService;
+import nmtt.demo.service.book.BookService;
+import nmtt.demo.service.cloudinary.CloudinaryService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -26,96 +21,96 @@ import java.util.Map;
 @RequestMapping("/books")
 @Slf4j
 @RequiredArgsConstructor
-@FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class BookController {
-    BookService bookService;
-    CloudinaryService cloudinaryService;
+    private final BookService bookService;
+    private final CloudinaryService cloudinaryService;
 
     @GetMapping
-    ApiResponse<List<BookResponse>> getAllBooks() {
-
-        return ApiResponse.<List<BookResponse>>builder()
-                .result(bookService.getAllBook())
-                .build();
+    public ResponseEntity<List<BookResponse>> getAllBooks() {
+        List<BookResponse> books = bookService.getAllBook();
+        return ResponseEntity.ok(books);
     }
 
     @PostMapping
-    public ApiResponse<BookResponse> createBook(@RequestBody @Valid BookCreationRequest request){
-        ApiResponse<BookResponse> apiResponse = new ApiResponse<>();
-
-        apiResponse.setResult(bookService.createBook(request));
-        return apiResponse;
+    public ResponseEntity<BookResponse> createBook(@RequestBody @Valid BookCreationRequest request) {
+        BookResponse bookResponse = bookService.createBook(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(bookResponse);
     }
 
+
     @PutMapping("/{bookId}")
-    public BookResponse updateBookById(@PathVariable("bookId") String bookId, @RequestBody BookUpdateRequest request){
-        return bookService.updateBookById(bookId, request);
+    public ResponseEntity<BookResponse> updateBookById(
+            @PathVariable("bookId") String bookId,
+            @RequestBody @Valid BookUpdateRequest request) {
+
+        BookResponse updatedBook = bookService.updateBookById(bookId, request);
+        return ResponseEntity.ok(updatedBook);
     }
 
     @DeleteMapping("/{bookId}")
-    public ApiResponse<String> deleteBookById(@PathVariable("bookId") String bookId){
+    public ResponseEntity<Void> deleteBookById(@PathVariable("bookId") String bookId) {
         bookService.deleteBookById(bookId);
-        return ApiResponse.<String>builder().result("Book has been deleted").build();
+        return ResponseEntity.noContent().build(); // 204 No Content
     }
 
     @PostMapping("/search")
-    public ApiResponse<List<BookResponse>> searchBook(@RequestParam String keyword){
-
-        return ApiResponse.<List<BookResponse>>builder()
-                .result(bookService.searchBooks(keyword))
-                .build();
-
+    public ResponseEntity<List<BookResponse>> searchBook(@RequestParam String keyword) {
+        List<BookResponse> books = bookService.searchBooks(keyword);
+        return ResponseEntity.ok(books);
     }
 
-    @PostMapping("/importCsv")
-    public ApiResponse<String> importDataByCsv(@RequestParam("file") MultipartFile file){
+    @PostMapping("/import-csv")
+    public ResponseEntity<Map<String, String>> importDataByCsv(@RequestParam("file") MultipartFile file) {
         bookService.importBooksFromCsv(file);
-        return ApiResponse.<String>builder().result("Add data successfully").build();
+        return ResponseEntity.ok(Map.of("message", "Add data successfully"));
     }
 
     @PostMapping("/{bookId}/upload")
-    public ApiResponse<?> uploadBookImage(@PathVariable String bookId, @RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> uploadBookImage(@PathVariable String bookId, @RequestParam("file") MultipartFile file) {
         try {
             if (file.getSize() > 2 * 1024 * 1024) {
-                return ApiResponse.<String>builder().result("File size must be under 2MB!").build();
+                return ResponseEntity.badRequest().body(Map.of("error", "File size must be under 2MB!"));
             }
 
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg"))) {
-                return ApiResponse.<String>builder().result("Only PNG and JPG images are allowed!").build();
+                return ResponseEntity.badRequest().body(Map.of("error", "Only PNG and JPG images are allowed!"));
             }
 
-            Map uploadResult = cloudinaryService.uploadFile(file, "trainJava");
+            Map<String, Object> uploadResult = cloudinaryService.uploadFile(file, "trainJava");
 
             BookResponse bookResponse = bookService.updateBookImage(bookId,
                     (String) uploadResult.get("secure_url"),
                     (String) uploadResult.get("public_id"));
 
-            return ApiResponse.<BookResponse>builder()
-                    .result(bookResponse)
-                    .build();
+            return ResponseEntity.ok(bookResponse);
 
         } catch (IOException e) {
-            return ApiResponse.<String>builder().result("Error uploading file: " + e.getMessage()).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error uploading file: " + e.getMessage()));
         }
     }
 
     @GetMapping("/{bookId}/preview")
-    public ApiResponse<?> previewBookImage(@PathVariable String bookId) {
+    public ResponseEntity<?> previewBookImage(@PathVariable String bookId) {
         String imageUrl = bookService.getBookImageUrl(bookId);
+
         if (imageUrl == null) {
-            return ApiResponse.<String>builder().result("Image not found").build();
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Image not found"));
         }
-        return ApiResponse.<String>builder().result(imageUrl).build();
+
+        return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
 
     @DeleteMapping("/{bookId}/delete-image")
-    public ApiResponse<?> deleteBookImage(@PathVariable String bookId) {
+    public ResponseEntity<?> deleteBookImage(@PathVariable String bookId) {
         try {
             bookService.deleteBookImage(bookId);
-            return ApiResponse.<String>builder().result("Book image deleted successfully!").build();
+            return ResponseEntity.ok(Map.of("message", "Book image deleted successfully!"));
         } catch (Exception e) {
-            return ApiResponse.<String>builder().result("Error deleting file: " + e.getMessage()).build();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("error", "Error deleting file: " + e.getMessage()));
         }
     }
 }

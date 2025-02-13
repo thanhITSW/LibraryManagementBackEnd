@@ -3,7 +3,7 @@ package nmtt.demo.components;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
-import nmtt.demo.service.SystemConfigService;
+import nmtt.demo.service.system.SystemConfigService;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 

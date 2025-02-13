@@ -1,6 +1,7 @@
 package nmtt.demo.exception;
 
 import nmtt.demo.dto.request.Account.ApiResponse;
+import nmtt.demo.enums.ErrorCode;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -46,30 +47,16 @@ public class GlobalExceptionHandler {
                         .build());
     }
 
-    @ExceptionHandler(value = MethodArgumentNotValidException.class)
-    ResponseEntity<ApiResponse> handlingValidation(MethodArgumentNotValidException exception){
-        String enumKey = exception.getFieldError().getDefaultMessage();
-
-        ErrorCode errorCode = ErrorCode.INVALID_KEY;
-
-        try{
-            errorCode = ErrorCode.valueOf(enumKey);
-        }catch (IllegalArgumentException e){
-
-        }
-
-        ApiResponse apiResponse = new ApiResponse<>();
-
-        apiResponse.setCode(errorCode.getCode());
-        apiResponse.setMessage(errorCode.getMessage());
-
-        return ResponseEntity.badRequest().body(apiResponse);
-    }
-
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<String> handleMethodNotSupportedException(HttpRequestMethodNotSupportedException ex) {
         String errorMessage = "HTTP method " + ex.getMethod() + " is not supported for this endpoint. Supported methods are: "
                 + ex.getSupportedHttpMethods();
         return new ResponseEntity<>(errorMessage, HttpStatus.METHOD_NOT_ALLOWED);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiResponse<String>> handleValidationException(MethodArgumentNotValidException ex) {
+        String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder().result(errorMessage).build());
     }
 }
