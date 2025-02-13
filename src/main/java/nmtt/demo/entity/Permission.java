@@ -1,7 +1,6 @@
 package nmtt.demo.entity;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
@@ -11,8 +10,13 @@ import lombok.experimental.FieldDefaults;
 @Entity
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Table(name = "permission")
 public class Permission {
+
     @Id
+    @Column(name = "name", nullable = false, updatable = false)
     String name;
+
+    @Column(name = "description")
     String description;
 }

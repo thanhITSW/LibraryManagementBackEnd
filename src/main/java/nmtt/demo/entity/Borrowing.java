@@ -11,10 +11,13 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@Table(name = "borrowings")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Borrowing {
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @Column(name = "id", nullable = false, updatable = false)
     String id;
 
     @ManyToOne
@@ -25,10 +28,12 @@ public class Borrowing {
     @JoinColumn(name = "book_id", nullable = false)
     Book book;
 
-    @Column(nullable = false)
+    @Column(name = "borrow_date", nullable = false)
     LocalDate borrowDate;
 
+    @Column(name = "return_date")
     LocalDate returnDate;
 
+    @Column(name = "returned", nullable = false)
     boolean returned = false;
 }

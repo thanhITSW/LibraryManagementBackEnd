@@ -11,14 +11,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@FieldDefaults(level = AccessLevel.PRIVATE)
 public class AccountCreationRequest {
-    @Email(message = "EMAIL_INVALID")
-    String email;
+    @Email(message = "Email is invalid")
+    private String email;
 
-    @Size(min = 5, message = "PASSWORD_INVALID")
-    String password;
-    String firstName;
-    LocalDate dob;
-    String lastName;
+    @Size(min = 5, message = "Password must be at least 5 characters")
+    private String password;
+
+    private String firstName;
+    private LocalDate dob;
+    private String lastName;
 }
