@@ -5,11 +5,11 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.ApiResponse;
+import nmtt.demo.entity.Book;
 import nmtt.demo.service.BorrowingService;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/borrowing")
@@ -46,4 +46,12 @@ public class BorrowingController {
                     .build();
         }
     }
+
+    @GetMapping("/{accountId}/borrowed-books")
+    public ApiResponse<List<Book>> getBorrowedBooks(@PathVariable String accountId) {
+        return ApiResponse.<List<Book>>builder()
+                .result(borrowingService.getBorrowedBooks(accountId))
+                .build();
+    }
+
 }

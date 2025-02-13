@@ -30,6 +30,7 @@ import java.util.List;
 public class BookService {
     BookRepository bookRepository;
     BookMapper bookMapper;
+    CloudinaryService cloudinaryService;
 
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
@@ -62,6 +63,7 @@ public class BookService {
     @Transactional
     @PreAuthorize("hasRole('ADMIN')")
     public void deleteBookById(String bookId){
+        deleteBookImage(bookId);
         bookRepository.deleteById(bookId);
     }
 
@@ -114,5 +116,52 @@ public class BookService {
         } catch (Exception e) {
             throw new AppException(ErrorCode.CSV_IMPORT_FAILED);
         }
+    }
+
+    @Transactional
+    public BookResponse updateBookImage(String bookId, String imageUrl, String publicId) {
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
+
+        // Xóa ảnh cũ trên Cloudinary (nếu có)
+        if (book.getImagePublicId() != null) {
+            try {
+                cloudinaryService.deleteFile(book.getImagePublicId());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to delete old image: " + e.getMessage());
+            }
+        }
+
+        // Cập nhật ảnh mới vào database
+        book.setImageUrl(imageUrl);
+        book.setImagePublicId(publicId);
+        bookRepository.save(book);
+
+        return bookMapper.toBookResponse(bookRepository.save(book));
+    }
+
+    //Lấy link ảnh của sách
+    public String getBookImageUrl(String bookId) {
+        Book book = bookRepository.findById(bookId).orElse(null);
+        return book != null ? book.getImageUrl() : null;
+    }
+
+    //Xóa ảnh sách
+    @Transactional
+    public void deleteBookImage(String bookId) {
+        Book book = bookRepository.findById(bookId).orElseThrow(() -> new RuntimeException("Book not found"));
+
+        // Xóa ảnh trên Cloudinary
+        if (book.getImagePublicId() != null) {
+            try {
+                cloudinaryService.deleteFile(book.getImagePublicId());
+            } catch (Exception e) {
+                throw new RuntimeException("Failed to delete image: " + e.getMessage());
+            }
+        }
+
+        // Xóa dữ liệu ảnh trong DB
+        book.setImageUrl(null);
+        book.setImagePublicId(null);
+        bookRepository.save(book);
     }
 }

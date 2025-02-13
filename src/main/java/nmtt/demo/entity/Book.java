@@ -21,6 +21,8 @@ public class Book {
     String category;
     int totalCopies;
     int availableCopies;
+    String imageUrl;
+    String imagePublicId;
 
     @Builder.Default
     boolean available = true;

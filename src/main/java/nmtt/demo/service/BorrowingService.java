@@ -17,6 +17,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -75,5 +77,14 @@ public class BorrowingService {
         Book book = borrowing.getBook();
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
+    }
+
+    @Transactional
+    public List<Book> getBorrowedBooks(String accountId) {
+        List<Borrowing> borrowings = borrowingRepository.findByAccountIdAndReturnedFalse(accountId);
+
+        return borrowings.stream()
+                .map(Borrowing::getBook)
+                .collect(Collectors.toList());
     }
 }
