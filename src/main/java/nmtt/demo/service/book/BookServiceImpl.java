@@ -12,6 +12,7 @@ import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
 import nmtt.demo.service.cloudinary.CloudinaryService;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -92,24 +93,24 @@ public class BookServiceImpl implements BookService{
     }
 
     /**
-     * Searches for books by keyword. The search checks if the title, author, or category contains the keyword.
+     * Searches for books based on the given keyword.
+     * <p>
+     * This method uses Spring Data JPA Specifications to find books where the title,
+     * author, or category contains the keyword (case-insensitive).
+     * </p>
      *
-     * @param keyword The keyword to search for in the book's title, author, or category.
-     * @return A list of {@link BookResponse} that match the search criteria.
+     * @param keyword The search keyword.
+     * @return A list of books matching the search criteria, mapped to {@link BookResponse}.
      */
     @Override
     public List<BookResponse> searchBooks(String keyword) {
-        String lowerKeyword = keyword.toLowerCase();
-
-        return bookRepository
-                .findAll().
-                stream()
-                .filter(book -> book.getTitle().toLowerCase().contains(lowerKeyword) ||
-                        book.getAuthor().toLowerCase().contains(lowerKeyword) ||
-                        book.getCategory().toLowerCase().contains(lowerKeyword))
+        Specification<Book> spec = BookSpecification.searchByKeyword(keyword);
+        return bookRepository.findAll(spec)
+                .stream()
                 .map(bookMapper::toBookResponse)
                 .toList();
     }
+
 
     /**
      * Imports books from a CSV file. The method reads the file, processes each line (skipping the header),

@@ -2,12 +2,14 @@ package nmtt.demo.dto.request.Account;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 import java.time.LocalDate;
 import java.util.List;
 
 @Data
+@Builder
 public class AccountUpdateRequest {
     @Email(message = "Email is invalid")
     private String email;
