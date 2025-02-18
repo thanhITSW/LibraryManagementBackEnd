@@ -73,14 +73,14 @@ public class AccountController {
         return ResponseEntity.ok("New password has been send your email");
     }
 
-    @PostMapping("/request-changeMail")
+    @PostMapping("/request-change-mail")
     public ResponseEntity<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
         accountService.requestChangeMail(accountId, newEmail);
 
         return ResponseEntity.ok("Verification code has been sent to the new email");
     }
 
-    @PostMapping("/verify-changeMail")
+    @PostMapping("/verify-change-mail")
     public ResponseEntity<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
         accountService.verifyChangeMail(accountId, verificationCode);
 

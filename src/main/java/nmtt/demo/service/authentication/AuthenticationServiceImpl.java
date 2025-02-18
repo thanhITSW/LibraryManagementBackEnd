@@ -121,7 +121,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @throws ParseException If there is an error while parsing the token.
      * @throws AppException If the token is invalid, expired, or has been invalidated.
      */
-    private SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
+    @Override
+    public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 
         SignedJWT signedJWT = SignedJWT.parse(token);
@@ -194,7 +195,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @return The generated JWT token as a string.
      * @throws RuntimeException If there is an error while generating the token.
      */
-    private String generateToken(Account account){
+    @Override
+    public String generateToken(Account account){
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -252,7 +254,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @param account The account for which the scope is to be built.
      * @return A string representing the account's roles and permissions in the scope.
      */
-    private String buildScope(Account account){
+    @Override
+    public String buildScope(Account account){
         StringJoiner stringJoiner = new StringJoiner("");
         if(!CollectionUtils.isEmpty(account.getRoles())){
             account.getRoles().forEach(role -> {
@@ -283,6 +286,5 @@ public class AuthenticationServiceImpl implements AuthenticationService{
         account.setActive(true);
 
         accountRepository.save(account);
-
     }
 }

@@ -4,6 +4,8 @@ import jakarta.persistence.criteria.Predicate;
 import nmtt.demo.entity.Account;
 import org.springframework.data.jpa.domain.Specification;
 
+import java.time.LocalDate;
+
 public class AccountSearchSpecification {
     public static Specification<Account> hasName(String name) {
         return (root, query, criteriaBuilder) -> {
@@ -30,8 +32,9 @@ public class AccountSearchSpecification {
             if (dateFrom == null || dateTo == null) {
                 return criteriaBuilder.conjunction();
             }
-            Predicate datePredicate = criteriaBuilder.between(root.get("dob"), dateFrom, dateTo);
-            return datePredicate;
+            LocalDate fromDate = LocalDate.parse(dateFrom);
+            LocalDate toDate = LocalDate.parse(dateTo);
+            return criteriaBuilder.between(root.get("dob"), fromDate, toDate);
         };
     }
 }
