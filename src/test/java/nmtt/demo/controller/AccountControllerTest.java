@@ -175,7 +175,7 @@ public class AccountControllerTest {
     void requestChangeMail_success() throws Exception {
         Mockito.doNothing().when(accountService).requestChangeMail(Mockito.anyString(), Mockito.anyString());
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/accounts/request-changeMail")
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts/request-change-mail")
                         .param("accountId", "1234567890")
                         .param("newEmail", "newemail@gmail.com"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
@@ -187,7 +187,7 @@ public class AccountControllerTest {
     void verifyChangeMail_success() throws Exception {
         Mockito.doNothing().when(accountService).verifyChangeMail(Mockito.anyString(), Mockito.anyString());
 
-        mockMvc.perform(MockMvcRequestBuilders.post("/accounts/verify-changeMail")
+        mockMvc.perform(MockMvcRequestBuilders.post("/accounts/verify-change-mail")
                         .param("accountId", "1234567890")
                         .param("verificationCode", "123456"))
                 .andExpect(MockMvcResultMatchers.status().isOk())
