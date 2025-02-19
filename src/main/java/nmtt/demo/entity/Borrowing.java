@@ -11,7 +11,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "borrowings")
+@Table(name = "borrowing")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class Borrowing {
 

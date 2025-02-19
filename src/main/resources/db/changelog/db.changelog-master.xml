@@ -4,6 +4,8 @@
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog
                    https://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
 
-    <include file="db/changelog/db.changelog-admin.xml"/>
+    <include file="db/changelog/scripts/create_account_admin.sql"/>
+    <include file="db/changelog/scripts/add_role_admin.sql" />
+    <include file="db/changelog/scripts/set_role_account_admin.sql" />
 
 </databaseChangeLog>

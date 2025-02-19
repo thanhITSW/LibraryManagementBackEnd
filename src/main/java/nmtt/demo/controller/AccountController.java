@@ -13,7 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.core.context.SecurityContextHolder;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/accounts")
@@ -88,7 +90,7 @@ public class AccountController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<AccountResponse>> searchUsers(
+    public ResponseEntity<Map<String, Object>> searchUsers(
             @RequestParam(required = false) String name,
             @RequestParam(required = false) String bookTitle,
             @RequestParam(required = false) String dateFrom,
@@ -96,9 +98,14 @@ public class AccountController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size) {
 
-        Page<AccountResponse> responses = accountService.searchMember(name
-                , bookTitle, dateFrom, dateTo, page,size);
+        Page<AccountResponse> responses = accountService.searchMember(name, bookTitle, dateFrom, dateTo, page, size);
 
-        return ResponseEntity.ok(responses);
+        Map<String, Object> response = new HashMap<>();
+        response.put("data", responses.getContent());
+        response.put("currentPage", responses.getNumber());
+        response.put("totalItems", responses.getTotalElements());
+        response.put("totalPages", responses.getTotalPages());
+
+        return ResponseEntity.ok(response);
     }
 }
