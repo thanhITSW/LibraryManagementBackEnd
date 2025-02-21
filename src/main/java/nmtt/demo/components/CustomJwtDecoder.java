@@ -6,6 +6,8 @@ import javax.crypto.spec.SecretKeySpec;
 
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.IntrospectRequest;
+import nmtt.demo.enums.ErrorCode;
+import nmtt.demo.exception.AppException;
 import nmtt.demo.service.authentication.AuthenticationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
@@ -42,6 +44,13 @@ public class CustomJwtDecoder implements JwtDecoder {
                     .build();
         }
 
-        return nimbusJwtDecoder.decode(token);
+        Jwt jwt = nimbusJwtDecoder.decode(token);
+
+        String tokenType = jwt.getClaim("token_type");
+        if (!"access".equals(tokenType)) {
+            throw new BadJwtException("Token invalid");
+        }
+
+        return jwt;
     }
 }

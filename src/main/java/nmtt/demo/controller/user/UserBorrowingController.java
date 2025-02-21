@@ -1,7 +1,8 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nmtt.demo.dto.request.Book.BookRequest;
 import nmtt.demo.entity.Book;
 import nmtt.demo.service.borrowing.BorrowingService;
 import org.springframework.http.ResponseEntity;
@@ -11,16 +12,16 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/borrowing")
+@RequestMapping("${user-mapping}/borrowing")
 @Slf4j
 @RequiredArgsConstructor
-public class BorrowingController {
+public class UserBorrowingController {
     private final BorrowingService borrowingService;
 
     @PostMapping("/borrow")
-    public ResponseEntity<?> borrowBook(@RequestParam String accountId, @RequestParam String bookId) {
+    public ResponseEntity<?> borrowBook(@RequestBody BookRequest request) {
         try {
-            borrowingService.borrowBook(accountId, bookId);
+            borrowingService.borrowBook(request);
             return ResponseEntity.ok(Map.of("message", "Book borrowed successfully!"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
@@ -28,9 +29,9 @@ public class BorrowingController {
     }
 
     @PostMapping("/return")
-    public ResponseEntity<?> returnBook(@RequestParam String accountId, @RequestParam String bookId) {
+    public ResponseEntity<?> returnBook(@RequestBody BookRequest request) {
         try {
-            borrowingService.returnBook(accountId, bookId);
+            borrowingService.returnBook(request);
             return ResponseEntity.ok(Map.of("message", "Book returned successfully!"));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));

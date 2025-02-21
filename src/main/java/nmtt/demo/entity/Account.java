@@ -37,6 +37,9 @@ public class Account {
     @Column(name = "dob")
     LocalDate dob;
 
+    @Column(name = "phone")
+    String phone;
+
     @Column(name = "active")
     boolean active;
 

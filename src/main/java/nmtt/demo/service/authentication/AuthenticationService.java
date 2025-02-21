@@ -21,5 +21,6 @@ public interface AuthenticationService {
 
     public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException;
     public String generateToken(Account account);
+    public String generateRefreshToken(Account account);
     public String buildScope(Account account);
 }

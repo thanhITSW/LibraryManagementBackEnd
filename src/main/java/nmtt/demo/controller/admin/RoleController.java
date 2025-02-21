@@ -1,4 +1,4 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.RoleRequest;
@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/roles")
+@RequestMapping("${admin-mapping}/roles")
 @RequiredArgsConstructor
 public class RoleController {
     private final RoleService roleService;

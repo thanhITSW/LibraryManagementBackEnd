@@ -1,4 +1,4 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,10 +18,10 @@ import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/books")
+@RequestMapping("${admin-mapping}/books")
 @Slf4j
 @RequiredArgsConstructor
-public class BookController {
+public class AdminBookController {
     private final BookService bookService;
     private final CloudinaryService cloudinaryService;
 

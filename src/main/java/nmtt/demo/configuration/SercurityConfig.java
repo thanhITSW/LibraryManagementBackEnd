@@ -22,23 +22,23 @@ import org.springframework.security.web.SecurityFilterChain;
 @RequiredArgsConstructor
 public class SercurityConfig {
 
-    @Value("${security.public.endpoints.post}")
+    @Value("${security.public.endpoints.common}")
     private String[] PUBLIC_ENDPOINTS;
-
-    @Value("${security.public.endpoints.get}")
-    private String[] PUBLIC_ENDPOINTS_GET;
 
     @Value("${security.auth.endpoints.admin}")
     private String[] AUTH_ENDPOINTS_ADMIN;
+
+    @Value("${security.auth.endpoints.user}")
+    private String[] AUTH_ENDPOINTS_USER;
 
     private final CustomJwtDecoder customJwtDecoder;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity.authorizeHttpRequests(request ->
-                request.requestMatchers(HttpMethod.POST, PUBLIC_ENDPOINTS).permitAll()
-                        .requestMatchers(HttpMethod.GET, PUBLIC_ENDPOINTS_GET).permitAll()
+                request.requestMatchers(PUBLIC_ENDPOINTS).permitAll()
                         .requestMatchers(AUTH_ENDPOINTS_ADMIN).hasRole("ADMIN")
+                        .requestMatchers(AUTH_ENDPOINTS_USER).hasRole("USER")
                 .anyRequest()
                 .authenticated()
         );

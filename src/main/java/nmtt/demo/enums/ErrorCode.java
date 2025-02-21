@@ -25,6 +25,8 @@ public enum ErrorCode {
     BORROWED_BOOK(1009, "You have already borrowed this book!", HttpStatus.BAD_REQUEST),
     NOT_AVAILABLE_BOOK(1009, "No copies of the book are available!", HttpStatus.BAD_REQUEST),
     BORROW_RECORD_NOT_FOUND(1009, "No borrowing record found for this user and book!", HttpStatus.BAD_REQUEST),
+    INVALID_OTP(1010, "OTP INVALID", HttpStatus.BAD_REQUEST),
+    INVALID_TOKEN(1011, "INVALID TOKEN", HttpStatus.UNAUTHORIZED),
     ;
 
     private int code;

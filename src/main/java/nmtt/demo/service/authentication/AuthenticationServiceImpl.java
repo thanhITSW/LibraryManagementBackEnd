@@ -69,16 +69,16 @@ public class AuthenticationServiceImpl implements AuthenticationService{
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var token = generateToken(account);
+        var access_token = generateToken(account);
+        var refresh_token = generateRefreshToken(account);
 
         return account.isActive() ?
                 AuthenticationResponse.builder()
-                        .token(token)
-                        .authenticated(authenticated)
+                        .access_token(access_token)
+                        .refresh_token(refresh_token)
                         .build() :
                 AuthenticationResponse.builder()
-                        .token("Tài khoản của bạn chưa được kích hoạt")
-                        .authenticated(false)
+                        .access_token("Tài khoản của bạn chưa được kích hoạt")
                         .build()
                 ;
     }
@@ -165,6 +165,11 @@ public class AuthenticationServiceImpl implements AuthenticationService{
 
         var jit = signedJWT.getJWTClaimsSet().getJWTID();
         var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        var token_type = signedJWT.getJWTClaimsSet().getClaim("token_type");
+
+        if(!token_type.equals("refresh")){
+            throw new AppException(ErrorCode.INVALID_TOKEN);
+        }
 
         InvalidatedToken invalidatedToken =
                 InvalidatedToken.builder()
@@ -180,11 +185,12 @@ public class AuthenticationServiceImpl implements AuthenticationService{
                         .findAccountByEmail(email)
                         .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
-        var token = generateToken(user);
+        var access_token = generateToken(user);
+        var refresh_token = regenerateRefreshToken(request.getToken());
 
         return AuthenticationResponse.builder()
-                .token(token)
-                .authenticated(true)
+                .access_token(access_token)
+                .refresh_token(refresh_token)
                 .build();
     }
 
@@ -201,8 +207,9 @@ public class AuthenticationServiceImpl implements AuthenticationService{
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
                 .subject(account.getEmail())
-                .issuer("nmtt.com")
+                .issuer(account.getId())
                 .issueTime(new Date())
+                .claim("token_type", "access")
                 .expirationTime(new Date(
                         Instant.now()
                                 .plus(VALID_DURATION, ChronoUnit.SECONDS)
@@ -222,6 +229,84 @@ public class AuthenticationServiceImpl implements AuthenticationService{
         } catch (JOSEException e) {
             log.error("Cannot create token", e);
             throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Generates a signed refresh token (JWT) for the given account.
+     * The token includes claims like subject (email), issuer (account ID),
+     * issue time, expiration, scope, and a unique ID.
+     *
+     * @param account The account to generate the refresh token for.
+     * @return A signed JWT refresh token.
+     * @throws RuntimeException If token creation fails.
+     */
+    @Override
+    public String generateRefreshToken(Account account){
+        JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+
+        JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
+                .subject(account.getEmail())
+                .issuer(account.getId())
+                .issueTime(new Date())
+                .claim("token_type", "refresh")
+                .expirationTime(new Date(
+                        Instant.now()
+                                .plus(REFRESHABLE_DURATION, ChronoUnit.SECONDS)
+                                .toEpochMilli()
+                ))
+                .jwtID(UUID.randomUUID().toString())
+                .claim("scope", buildScope(account))
+                .build();
+
+        Payload payload = new Payload(jwtClaimsSet.toJSONObject());
+
+        JWSObject jwsObject = new JWSObject(header, payload);
+
+        try {
+            jwsObject.sign(new MACSigner(SIGNER_KEY.getBytes()));
+            return jwsObject.serialize();
+        } catch (JOSEException e) {
+            log.error("Cannot create token", e);
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Regenerates a refresh token based on an existing old refresh token.
+     * This method creates a new JWT with the same claims as the old token,
+     * but with a new issue time and JWT ID. The expiration time is preserved
+     * from the old token.
+     *
+     * @param oldRefreshToken The existing refresh token to be regenerated.
+     * @return A new JWT refresh token as a serialized string.
+     * @throws RuntimeException If there's an error parsing the old token or
+     *                          signing the new token.
+     */
+    private String regenerateRefreshToken(String oldRefreshToken) {
+        try {
+            SignedJWT signedJWT = SignedJWT.parse(oldRefreshToken);
+            JWTClaimsSet oldClaims = signedJWT.getJWTClaimsSet();
+
+            Date expirationTime = oldClaims.getExpirationTime();
+
+            JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
+            JWTClaimsSet newClaims = new JWTClaimsSet.Builder()
+                    .subject(oldClaims.getSubject())
+                    .issuer(oldClaims.getIssuer())
+                    .issueTime(new Date())
+                    .expirationTime(expirationTime)
+                    .jwtID(UUID.randomUUID().toString())
+                    .claim("token_type", "refresh")
+                    .claim("scope", oldClaims.getClaim("scope"))
+                    .build();
+
+            SignedJWT newToken = new SignedJWT(header, newClaims);
+            newToken.sign(new MACSigner(SIGNER_KEY.getBytes()));
+
+            return newToken.serialize();
+        } catch (ParseException | JOSEException e) {
+            throw new RuntimeException("Error regenerating refresh token", e);
         }
     }
 

@@ -6,6 +6,6 @@
 
     <include file="db/changelog/scripts/create_account_admin.sql"/>
     <include file="db/changelog/scripts/add_role_admin.sql" />
-    <include file="db/changelog/scripts/set_role_account_admin.sql" />
+    <include file="db/changelog/scripts/set_role_account_admin.sql"  />
 
 </databaseChangeLog>

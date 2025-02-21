@@ -1,4 +1,4 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.admin;
 
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.PermissionRequest;
@@ -11,7 +11,7 @@ import org.springframework.http.ResponseEntity;
 import java.util.List;
 
 @RestController
-@RequestMapping("/permissions")
+@RequestMapping("${admin-mapping}/permissions")
 @RequiredArgsConstructor
 public class PermissionController {
     private final PermissionService permissionService;

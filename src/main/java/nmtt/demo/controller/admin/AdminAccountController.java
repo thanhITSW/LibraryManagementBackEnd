@@ -1,37 +1,35 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.admin;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AccountCreationRequest;
 import nmtt.demo.dto.request.Account.AccountUpdateRequest;
+import nmtt.demo.dto.request.Account.AdminCreationAccountRequest;
 import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.service.account.AccountService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.jwt.Jwt;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/accounts")
+@RequestMapping("${admin-mapping}/accounts")
 @Slf4j
 @RequiredArgsConstructor
-public class AccountController {
+public class AdminAccountController {
 
     private final AccountService accountService;
 
     @GetMapping
     public ResponseEntity<List<AccountResponse>> getAllUsers() {
-        var authentication = SecurityContextHolder.getContext().getAuthentication();
-
-        authentication.getAuthorities()
-                .forEach(grantedAuthority -> log.info(grantedAuthority.getAuthority()));
-
         List<AccountResponse> accounts = accountService.getAccount();
 
         return ResponseEntity.ok(accounts);
@@ -39,16 +37,9 @@ public class AccountController {
 
 
     @PostMapping
-    public ResponseEntity<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request) {
-        AccountResponse accountResponse = accountService.createAccount(request);
+    public ResponseEntity<AccountResponse> createAccount(@RequestBody @Valid AdminCreationAccountRequest request) {
+        AccountResponse accountResponse = accountService.adminCreateAccount(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountResponse);
-    }
-
-
-    @GetMapping("/my-info")
-    public ResponseEntity<AccountResponse> getMyInfo() {
-        AccountResponse accountResponse = accountService.getMyInfo();
-        return ResponseEntity.ok(accountResponse);
     }
 
 
@@ -66,27 +57,6 @@ public class AccountController {
         accountService.deleteUserById(userId);
 
         return ResponseEntity.ok("Account has been deleted");
-    }
-
-    @PostMapping("/reset-pass")
-    public ResponseEntity<String> resetPass(@RequestParam String email){
-        accountService.resetPass(email);
-
-        return ResponseEntity.ok("New password has been send your email");
-    }
-
-    @PostMapping("/request-change-mail")
-    public ResponseEntity<String> requestChangeMail(@RequestParam("accountId") String accountId, @RequestParam("newEmail") String newEmail) {
-        accountService.requestChangeMail(accountId, newEmail);
-
-        return ResponseEntity.ok("Verification code has been sent to the new email");
-    }
-
-    @PostMapping("/verify-change-mail")
-    public ResponseEntity<String> verifyChangeMail(@RequestParam("accountId") String accountId, @RequestParam("verificationCode") String verificationCode) {
-        accountService.verifyChangeMail(accountId, verificationCode);
-
-        return ResponseEntity.ok("Email has been successfully updated");
     }
 
     @GetMapping("/search")

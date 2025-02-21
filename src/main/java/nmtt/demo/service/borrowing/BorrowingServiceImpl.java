@@ -3,6 +3,7 @@ package nmtt.demo.service.borrowing;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nmtt.demo.dto.request.Book.BookRequest;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.Book;
 import nmtt.demo.entity.Borrowing;
@@ -11,6 +12,7 @@ import nmtt.demo.exception.AppException;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.BookRepository;
 import nmtt.demo.repository.BorrowingRepository;
+import nmtt.demo.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -26,29 +28,28 @@ public class BorrowingServiceImpl implements BorrowingService{
     private final BookRepository bookRepository;
 
     /**
-     * Allows an account to borrow a book by its ID.
-     * This method checks if the user has already borrowed the book, ensures the book is available,
-     * and updates the book's available copies and borrowing records accordingly.
+     * Allows a user to borrow a book if available.
      *
-     * @param accountId The ID of the account attempting to borrow the book.
-     * @param bookId The ID of the book being borrowed.
-     * @throws AppException if the user does not exist, the book does not exist, the user has already borrowed the book,
-     *                      or the book is not available.
+     * @param request the request containing the book ID to borrow
+     * @throws AppException if the user does not exist, the book does not exist,
+     *                      the user has already borrowed the book, or the book is unavailable.
      */
     @Transactional
     @Override
-    public void borrowBook(String accountId, String bookId){
+    public void borrowBook(BookRequest request){
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
         Account account = accountRepository
-                .findById(accountId)
+                .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         Book book = bookRepository
-                .findById(bookId)
+                .findById(request.getBookId())
                 .orElseThrow(() -> new AppException(ErrorCode.BOOK_NOT_EXISTED));
 
         // Check if the user has borrowed this type of book yet
         boolean alreadyBorrowed = borrowingRepository
-                .existsByAccountIdAndBookIdAndReturnedFalse(accountId, bookId);
+                .existsByAccountIdAndBookIdAndReturnedFalse(issuer, request.getBookId());
 
         if(alreadyBorrowed){
             throw new AppException(ErrorCode.BORROWED_BOOK);
@@ -72,19 +73,19 @@ public class BorrowingServiceImpl implements BorrowingService{
     }
 
     /**
-     * Allows an account to return a borrowed book by its ID.
-     * This method updates the borrowing record to mark the book as returned,
-     * updates the book's available copies, and saves the changes.
+     * Processes the return of a borrowed book by updating the borrowing record and
+     * increasing the available copies of the book.
      *
-     * @param accountId The ID of the account returning the book.
-     * @param bookId The ID of the book being returned.
-     * @throws AppException if the borrowing record is not found or the book has not been borrowed.
+     * @param request the request containing the book ID to return
+     * @throws AppException if no active borrowing record is found for the user and book.
      */
     @Transactional
     @Override
-    public void returnBook(String accountId, String bookId){
+    public void returnBook(BookRequest request){
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
         Borrowing borrowing = borrowingRepository
-                .findByAccountIdAndBookIdAndReturnedFalse(accountId, bookId)
+                .findByAccountIdAndBookIdAndReturnedFalse(issuer, request.getBookId())
                 .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
 
         //Update status book

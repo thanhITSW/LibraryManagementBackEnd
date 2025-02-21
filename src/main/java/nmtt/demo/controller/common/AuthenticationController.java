@@ -1,8 +1,11 @@
-package nmtt.demo.controller;
+package nmtt.demo.controller.common;
 
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
-import nmtt.demo.dto.request.Account.*;
+import nmtt.demo.dto.request.Account.AuthenticationRequest;
+import nmtt.demo.dto.request.Account.IntrospectRequest;
+import nmtt.demo.dto.request.Account.LogoutRequest;
+import nmtt.demo.dto.request.Account.RefreshRequest;
 import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.service.authentication.AuthenticationService;
@@ -14,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 import java.text.ParseException;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("${common-mapping}/auth")
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
@@ -27,14 +30,6 @@ public class AuthenticationController {
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }
-    }
-
-
-    @PostMapping("/introspect")
-    public ResponseEntity<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
-            throws ParseException, JOSEException {
-        IntrospectResponse result = authenticationService.introspect(request);
-        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/refresh")

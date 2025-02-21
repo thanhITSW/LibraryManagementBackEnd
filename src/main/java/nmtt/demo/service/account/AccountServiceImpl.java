@@ -3,19 +3,21 @@ package nmtt.demo.service.account;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.constant.PredefinedRole;
-import nmtt.demo.dto.request.Account.AccountCreationRequest;
-import nmtt.demo.dto.request.Account.AccountUpdateRequest;
+import nmtt.demo.dto.request.Account.*;
 import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.EmailVerification;
+import nmtt.demo.entity.OtpPhone;
 import nmtt.demo.entity.Role;
 import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.AccountMapper;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.EmailVerificationRepository;
+import nmtt.demo.repository.OtpPhoneRepository;
 import nmtt.demo.repository.RoleRepository;
 import nmtt.demo.service.email.EmailSenderService;
+import nmtt.demo.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +27,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 
@@ -37,6 +40,7 @@ public class AccountServiceImpl implements AccountService{
     private final RoleRepository roleRepository;
     private final EmailSenderService emailSenderService;
     private final EmailVerificationRepository emailVerificationRepository;
+    private final OtpPhoneRepository otpPhoneRepository;
 
     @Value("${URL_API}")
     private String urlApi;
@@ -57,6 +61,26 @@ public class AccountServiceImpl implements AccountService{
         }
 
         Account account = accountMapper.toAccount(request);
+        account.setPassword(passwordEncoder.encode(request.getPassword()));
+
+        HashSet<Role> roles = new HashSet<>();
+        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
+        account.setRoles(roles);
+        account = accountRepository.save(account);
+
+        emailSenderService.sendSimpleEmail(account.getEmail(), "Verify account"
+                , "Please click here to verify account: " + urlApi + "auth/" + account.getId());
+
+        return accountMapper.toAccountResponse(account);
+    }
+
+    @Override
+    public AccountResponse adminCreateAccount(AdminCreationAccountRequest request){
+        if(accountRepository.existsByEmail(request.getEmail())){
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+
+        Account account = accountMapper.adminToAccount(request);
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         HashSet<Role> roles = new HashSet<>();
@@ -117,7 +141,6 @@ public class AccountServiceImpl implements AccountService{
                 .orElseThrow(() -> new RuntimeException("Account not found") );;
 
         accountMapper.updateAccount(account, request);
-        account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         var roles = roleRepository
                 .findAllById(request.getRoles());
@@ -140,13 +163,13 @@ public class AccountServiceImpl implements AccountService{
     /**
      * Resets the user's password and sends the new password via email.
      *
-     * @param email The email address of the user requesting a password reset.
-     * @throws AppException If the user does not exist.
+     * @param request the request containing the user's email
+     * @throws AppException if the user does not exist
      */
     @Override
-    public void resetPass(String email) {
+    public void resetPass(EmailRequest request) {
         Account account = accountRepository
-                .findAccountByEmail(email)
+                .findAccountByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         String newPassword = String.format("%06d", (int) (Math.random() * 1000000));
@@ -156,27 +179,28 @@ public class AccountServiceImpl implements AccountService{
 
         String subject = "Reset Password";
         String message = "Your password has been reset. Your new password is: " + newPassword;
-        emailSenderService.sendSimpleEmail(email, subject, message);
+        emailSenderService.sendSimpleEmail(request.getEmail(), subject, message);
     }
 
     /**
-     * Requests an email change by generating a verification code and sending it to the new email.
+     * Sends a verification code to the user's new email address for email change confirmation.
      *
-     * @param accountId The ID of the account requesting the email change.
-     * @param newEmail The new email address to be verified.
-     * @throws AppException If the user does not exist.
+     * @param request the request containing the new email address
+     * @throws AppException if the user does not exist
      */
     @Override
-    public void requestChangeMail(String accountId, String newEmail) {
+    public void requestChangeMail(EmailRequest request) {
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
         accountRepository
-                .findById(accountId)
+                .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         String verificationCode = String.format("%06d", (int) (Math.random() * 1000000));
 
         EmailVerification verification = new EmailVerification();
-        verification.setAccountId(accountId);
-        verification.setNewEmail(newEmail);
+        verification.setAccountId(issuer);
+        verification.setNewEmail(request.getEmail());
         verification.setVerificationCode(verificationCode);
 
         emailVerificationRepository.save(verification);
@@ -184,24 +208,26 @@ public class AccountServiceImpl implements AccountService{
         // send email authentication
         String subject = "Verify New Email Address";
         String message = "Please use the following code to verify your new email address: " + verificationCode;
-        emailSenderService.sendSimpleEmail(newEmail, subject, message);
+        emailSenderService.sendSimpleEmail(request.getEmail(), subject, message);
     }
 
     /**
      * Verifies the email change request using the provided verification code and updates the user's email address.
      *
-     * @param accountId The ID of the account for which the email change is being verified.
-     * @param verificationCode The verification code sent to the new email.
+     * @param request The verification code sent to the new email.
      * @throws AppException If the verification code is invalid or the user does not exist.
      */
+    @Transactional
     @Override
-    public void verifyChangeMail(String accountId, String verificationCode) {
+    public void verifyChangeMail(VerifyCodeRequest request) {
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
         EmailVerification verification = emailVerificationRepository
-                .findByAccountIdAndVerificationCode(accountId, verificationCode)
+                .findByAccountIdAndVerificationCode(issuer, request.getOtp())
                 .orElseThrow(() -> new AppException(ErrorCode.INVALID_VERIFICATION_CODE));
 
         Account account = accountRepository
-                .findById(accountId)
+                .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         account.setEmail(verification.getNewEmail());
@@ -244,5 +270,80 @@ public class AccountServiceImpl implements AccountService{
         Page<Account> accounts = accountRepository.findAll(spec, pageable);
 
         return accounts.map(accountMapper::toAccountResponse);
+    }
+
+    /**
+     * Changes the authenticated user's password.
+     *
+     * @param request contains old and new passwords.
+     * @throws AppException if the user does not exist.
+     * @throws RuntimeException if the old password is incorrect.
+     */
+    @Transactional
+    @Override
+    public void changePassword(ChangePasswordRequest request){
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
+
+        Account account = accountRepository
+               .findById(issuer)
+               .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if(!passwordEncoder.matches(request.getOldPassword(), account.getPassword())){
+            throw new RuntimeException("Password not match");
+        }
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        accountRepository.save(account);
+    }
+
+    @Override
+    public String requestChangePhone(ChangePhoneRequest request) {
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
+
+        accountRepository
+                .findById(issuer)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        String otp = String.format("%06d", (int) (Math.random() * 1000000));
+
+        LocalDateTime createdAt = LocalDateTime.now();
+
+        OtpPhone otpPhone = OtpPhone.builder()
+                .accountId(issuer)
+                .phone(request.getPhone())
+                .otp(otp)
+                .createdAt(createdAt)
+                .build();
+
+        otpPhoneRepository.save(otpPhone);
+
+        return otp;
+    }
+
+    @Override
+    public void verifyChangePhone(VerifyCodeRequest request) {
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
+
+        OtpPhone otpPhone = otpPhoneRepository
+               .findByOtpAndAccountIdAndCreatedAtAfter(request.getOtp(), issuer, LocalDateTime.now().minusMinutes(5))
+               .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
+
+        accountRepository
+               .findById(issuer)
+               .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        String newPhone = otpPhone.getPhone();
+        accountRepository
+               .findById(otpPhone.getAccountId())
+               .map(account -> {
+                    account.setPhone(newPhone);
+                    return accountRepository.save(account);
+                })
+               .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        otpPhoneRepository.delete(otpPhone);
     }
 }

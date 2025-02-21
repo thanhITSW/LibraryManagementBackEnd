@@ -2,8 +2,10 @@ package nmtt.demo.dto.request.Account;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.Size;
-import lombok.*;
-import lombok.experimental.FieldDefaults;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDate;
 
@@ -11,7 +13,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AccountCreationRequest {
+public class AdminCreationAccountRequest {
     @Email(message = "Email is invalid")
     private String email;
 
@@ -22,6 +24,7 @@ public class AccountCreationRequest {
     private LocalDate dob;
     private String lastName;
 
-    @Size(min = 10, message = "Phone must be at least 10 characters")
+    @Size(min= 10, message = "Phone must be at least 10 characters")
     private String phone;
+    private boolean active;
 }
