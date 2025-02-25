@@ -125,7 +125,7 @@ public class AccountServiceImpl implements AccountService{
                 + "<p>Best regards,<br>The SparkMinds Team</p>"
                 + "</div>";
 
-        emailSenderService.sendSimpleEmail(account.getEmail(), "Create a new account"
+        emailSenderService.sendHtmlEmail(account.getEmail(), "Create a new account"
                 , htmlContent);
 
         return accountMapper.toAccountResponse(account);
@@ -351,7 +351,7 @@ public class AccountServiceImpl implements AccountService{
                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         if(!passwordEncoder.matches(request.getOldPassword(), account.getPassword())){
-            throw new RuntimeException("Password not match");
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
         account.setPassword(passwordEncoder.encode(request.getNewPassword()));

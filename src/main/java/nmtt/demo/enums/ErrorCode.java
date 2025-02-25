@@ -32,6 +32,7 @@ public enum ErrorCode {
     FIX_SYSTEM(1012, "System is under maintenance. Please try again later.", HttpStatus.BAD_GATEWAY),
     INVALID_JSON(1012, "INVALID_JSON", HttpStatus.BAD_REQUEST),
     NOT_FOUND(1012, "NOT_FOUND", HttpStatus.BAD_REQUEST),
+    PASSWORD_NOT_MATCH(1012, "Password not match", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;
