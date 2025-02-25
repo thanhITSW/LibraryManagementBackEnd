@@ -6,8 +6,13 @@ import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Book.BookCreationRequest;
 import nmtt.demo.dto.request.Book.BookUpdateRequest;
 import nmtt.demo.dto.response.Book.BookResponse;
+import nmtt.demo.entity.Book;
 import nmtt.demo.service.book.BookService;
 import nmtt.demo.service.cloudinary.CloudinaryService;
+import nmtt.demo.service.search.book.BookCriteria;
+import nmtt.demo.service.search.book.BookQueryService;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +29,7 @@ import java.util.Map;
 public class AdminBookController {
     private final BookService bookService;
     private final CloudinaryService cloudinaryService;
+    private final BookQueryService bookQueryService;
 
     @GetMapping
     public ResponseEntity<List<BookResponse>> getAllBooks() {
@@ -48,15 +54,16 @@ public class AdminBookController {
     }
 
     @DeleteMapping("/{bookId}")
-    public ResponseEntity<Void> deleteBookById(@PathVariable("bookId") String bookId) {
+    public ResponseEntity<String> deleteBookById(@PathVariable("bookId") String bookId) {
         bookService.deleteBookById(bookId);
-        return ResponseEntity.noContent().build(); // 204 No Content
+        return ResponseEntity.ok("Delete book successfully"); // 204 No Content
     }
 
-    @PostMapping("/search")
-    public ResponseEntity<List<BookResponse>> searchBook(@RequestParam String keyword) {
-        List<BookResponse> books = bookService.searchBooks(keyword);
-        return ResponseEntity.ok(books);
+    @GetMapping("/search")
+    public ResponseEntity<Page<Book>> searchBook(BookCriteria criteria
+            , Pageable pageable) {
+
+        return ResponseEntity.ok(bookQueryService.findByCriteria(criteria, pageable));
     }
 
     @PostMapping("/import-csv")

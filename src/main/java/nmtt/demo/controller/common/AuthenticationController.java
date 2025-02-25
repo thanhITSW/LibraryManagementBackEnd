@@ -45,9 +45,9 @@ public class AuthenticationController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/{accountId}")
-    public ResponseEntity<String> activeAccount(@PathVariable("accountId") String accountId) {
-        authenticationService.activeAccount(accountId);
+    @GetMapping("/active")
+    public ResponseEntity<String> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
+        authenticationService.activeAccount(token);
         return ResponseEntity.ok("Active account successfully");
     }
 }

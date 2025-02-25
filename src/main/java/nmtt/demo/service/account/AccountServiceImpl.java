@@ -16,6 +16,7 @@ import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.EmailVerificationRepository;
 import nmtt.demo.repository.OtpPhoneRepository;
 import nmtt.demo.repository.RoleRepository;
+import nmtt.demo.service.authentication.AuthenticationService;
 import nmtt.demo.service.email.EmailSenderService;
 import nmtt.demo.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,6 +42,7 @@ public class AccountServiceImpl implements AccountService{
     private final EmailSenderService emailSenderService;
     private final EmailVerificationRepository emailVerificationRepository;
     private final OtpPhoneRepository otpPhoneRepository;
+    private final AuthenticationService authenticationService;
 
     @Value("${URL_API}")
     private String urlApi;
@@ -67,9 +69,22 @@ public class AccountServiceImpl implements AccountService{
         roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
         account.setRoles(roles);
         account = accountRepository.save(account);
+        var token = authenticationService.generateToken(account);
 
-        emailSenderService.sendSimpleEmail(account.getEmail(), "Verify account"
-                , "Please click here to verify account: " + urlApi + "auth/" + account.getId());
+        String url_active = urlApi + "common/auth/active?token=" + token;
+
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Activate Your Account</h2>"
+                + "<p>Hello,</p>"
+                + "<p>Thank you for signing up. Please click the button below to activate your account:</p>"
+                + "<a href='" + url_active + "' target='_blank' style='display: inline-block; background-color: #007bff; color: #ffffff; padding: 10px 20px; font-size: 16px; text-decoration: none; border-radius: 5px; margin-top: 10px;'>"
+                + "Activate Now</a>"
+                + "<p>If you did not register for this account, please ignore this email.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+
+        emailSenderService.sendHtmlEmail(account.getEmail(), "Verify account"
+                , htmlContent);
 
         return accountMapper.toAccountResponse(account);
     }
@@ -84,12 +99,34 @@ public class AccountServiceImpl implements AccountService{
         account.setPassword(passwordEncoder.encode(request.getPassword()));
 
         HashSet<Role> roles = new HashSet<>();
-        roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
+
+        if (request.getRoles() != null && !request.getRoles().isEmpty()) {
+            request.getRoles().forEach(roleName ->
+                    roleRepository.findById(roleName).ifPresent(roles::add)
+            );
+        }
+
+        if (roles.isEmpty()) {
+            roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
+        }
+
         account.setRoles(roles);
         account = accountRepository.save(account);
 
-        emailSenderService.sendSimpleEmail(account.getEmail(), "Verify account"
-                , "Please click here to verify account: " + urlApi + "auth/" + account.getId());
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Your New Account Has Been Created</h2>"
+                + "<p>Hello,</p>"
+                + "<p>We are pleased to inform you that your account has been successfully created.</p>"
+                + "<p><strong>Account Details:</strong></p>"
+                + "<p><b>Email:</b> " + request.getEmail() + "</p>"
+                + "<p><b>Password:</b> " + request.getPassword() + "</p>"
+                + "<p>For security reasons, we recommend changing your password after logging in.</p>"
+                + "<p>If you have any questions, please contact our support team.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+
+        emailSenderService.sendSimpleEmail(account.getEmail(), "Create a new account"
+                , htmlContent);
 
         return accountMapper.toAccountResponse(account);
     }
@@ -178,8 +215,17 @@ public class AccountServiceImpl implements AccountService{
         accountRepository.save(account);
 
         String subject = "Reset Password";
-        String message = "Your password has been reset. Your new password is: " + newPassword;
-        emailSenderService.sendSimpleEmail(request.getEmail(), subject, message);
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Reset Your Password</h2>"
+                + "<p>Hello,</p>"
+                + "<p>You have requested to reset your password. Below is your new temporary password:</p>"
+                + "<p style='font-size: 18px; font-weight: bold; color: #d9534f;'>" + newPassword + "</p>"
+                + "<p>Please log in using this password and change it immediately for security purposes.</p>"
+                + "<p>If you did not request this reset, please contact our support team immediately.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+
+        emailSenderService.sendHtmlEmail(request.getEmail(), subject, htmlContent);
     }
 
     /**
@@ -207,8 +253,16 @@ public class AccountServiceImpl implements AccountService{
 
         // send email authentication
         String subject = "Verify New Email Address";
-        String message = "Please use the following code to verify your new email address: " + verificationCode;
-        emailSenderService.sendSimpleEmail(request.getEmail(), subject, message);
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Verify Your Email Change Request</h2>"
+                + "<p>Hello,</p>"
+                + "<p>We received a request to change your email address. Please use the verification code below to confirm this change:</p>"
+                + "<p style='font-size: 22px; font-weight: bold; color: #d9534f;'>" + verificationCode + "</p>"
+                + "<p>This code is valid for a limited time. If you did not request this change, please ignore this email.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+
+        emailSenderService.sendHtmlEmail(request.getEmail(), subject, htmlContent);
     }
 
     /**
@@ -236,8 +290,15 @@ public class AccountServiceImpl implements AccountService{
         emailVerificationRepository.delete(verification);
 
         String subject = "Email Changed Successfully";
-        String message = "Your email address has been successfully updated.";
-        emailSenderService.sendSimpleEmail(account.getEmail(), subject, message);
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #28a745;'>Email Updated Successfully</h2>"
+                + "<p>Hello,</p>"
+                + "<p>Your email address has been successfully updated in our system.</p>"
+                + "<p>If you did not request this change, please contact our support team immediately.</p>"
+                + "<p>Thank you for using our services.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+        emailSenderService.sendHtmlEmail(account.getEmail(), subject, htmlContent);
     }
 
     /**
@@ -345,5 +406,32 @@ public class AccountServiceImpl implements AccountService{
                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         otpPhoneRepository.delete(otpPhone);
+    }
+
+    @Override
+    public void resendLinkActiveAccount(EmailRequest request){
+        Account account = accountRepository.findAccountByEmail(request.getEmail())
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if(account.isActive()){
+            throw new AppException(ErrorCode.USER_EXISTED);
+        }
+
+        var token = authenticationService.generateToken(account);
+
+        String url_active = urlApi + "common/auth/active?token=" + token;
+
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Activate Your Account</h2>"
+                + "<p>Hello,</p>"
+                + "<p>Thank you for signing up. Please click the button below to activate your account:</p>"
+                + "<a href='" + url_active + "' target='_blank' style='display: inline-block; background-color: #007bff; color: #ffffff; padding: 10px 20px; font-size: 16px; text-decoration: none; border-radius: 5px; margin-top: 10px;'>"
+                + "Activate Now</a>"
+                + "<p>If you did not register for this account, please ignore this email.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+
+        emailSenderService.sendHtmlEmail(account.getEmail(), "Verify account"
+                , htmlContent);
     }
 }

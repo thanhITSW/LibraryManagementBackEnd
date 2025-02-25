@@ -21,4 +21,6 @@ public interface AccountService {
 
     String requestChangePhone(ChangePhoneRequest request);
     void verifyChangePhone(VerifyCodeRequest request);
+
+    void resendLinkActiveAccount(EmailRequest request);
 }

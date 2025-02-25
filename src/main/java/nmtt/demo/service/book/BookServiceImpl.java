@@ -1,5 +1,8 @@
 package nmtt.demo.service.book;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,10 +20,14 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -123,39 +130,52 @@ public class BookServiceImpl implements BookService{
     @Transactional
     @Override
     public void importBooksFromCsv(MultipartFile file) {
-
         if (!file.getOriginalFilename().endsWith(".csv")) {
             throw new AppException(ErrorCode.INVALID_CSV_FORMAT);
         }
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream()
-                        , StandardCharsets.UTF_8))) {
+        try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+             CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
             List<Book> books = new ArrayList<>();
-            String line;
-            boolean isFirstLine = true;
-            while ((line = reader.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue; // Skip header line
-                }
-                String[] data = line.split(",");
+            List<String[]> allRows = csvReader.readAll();
+
+            if (allRows.isEmpty()) {
+                throw new AppException(ErrorCode.EMPTY_CSV_FILE);
+            }
+
+            String[] headerRow = allRows.get(0);
+            List<String> expectedHeaders = List.of("title", "author", "category", "totalCopies", "availableCopies");
+            List<String> actualHeaders = Arrays.stream(headerRow)
+                    .map(h -> h.replace("\uFEFF", "").trim()) // Xóa BOM và khoảng trắng
+                    .toList();
+
+            if (!actualHeaders.equals(expectedHeaders)) {
+                throw new AppException(ErrorCode.INVALID_CSV_DATA);
+            }
+
+            for (int i = 1; i < allRows.size(); i++) {
+                String[] data = allRows.get(i);
+
                 if (data.length < 5) {
                     throw new AppException(ErrorCode.INVALID_CSV_FORMAT);
                 }
 
-                Book book = new Book();
-                book.setTitle(data[0].trim());
-                book.setAuthor(data[1].trim());
-                book.setCategory(data[2].trim());
-                book.setTotalCopies(Integer.parseInt(data[3].trim()));
-                book.setAvailableCopies(Integer.parseInt(data[4].trim()));
-//                book.setAvailable(Boolean.parseBoolean(data[5].trim()));
-                books.add(book);
+                try {
+                    Book book = new Book();
+                    book.setTitle(data[0].trim());
+                    book.setAuthor(data[1].trim());
+                    book.setCategory(data[2].trim());
+                    book.setTotalCopies(Integer.parseInt(data[3].trim()));
+                    book.setAvailableCopies(Integer.parseInt(data[4].trim()));
+                    books.add(book);
+                } catch (NumberFormatException e) {
+                    throw new AppException(ErrorCode.INVALID_CSV_DATA);
+                }
             }
+
             bookRepository.saveAll(books);
-        } catch (Exception e) {
+        } catch (IOException | CsvException e) {
             throw new AppException(ErrorCode.CSV_IMPORT_FAILED);
         }
     }

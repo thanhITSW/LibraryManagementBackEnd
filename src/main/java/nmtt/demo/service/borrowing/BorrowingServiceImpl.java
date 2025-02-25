@@ -109,9 +109,11 @@ public class BorrowingServiceImpl implements BorrowingService{
      */
     @Transactional
     @Override
-    public List<Book> getBorrowedBooks(String accountId) {
+    public List<Book> getBorrowedBooks() {
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
         List<Borrowing> borrowings = borrowingRepository
-                .findByAccountIdAndReturnedFalse(accountId);
+                .findByAccountIdAndReturnedFalse(issuer);
 
         return borrowings.stream()
                 .map(Borrowing::getBook)

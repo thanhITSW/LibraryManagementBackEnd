@@ -32,4 +32,11 @@ public class CommonAccountController {
 
         return ResponseEntity.ok("New password has been send your email");
     }
+
+    @PostMapping("/resend-link-active-account")
+    public ResponseEntity<String> resendLinkActiveAccount(@RequestBody EmailRequest request){
+        accountService.resendLinkActiveAccount(request);
+
+        return ResponseEntity.ok("Link active account has been send your email");
+    }
 }

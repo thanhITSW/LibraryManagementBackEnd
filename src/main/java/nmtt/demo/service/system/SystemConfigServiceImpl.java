@@ -53,18 +53,24 @@ public class SystemConfigServiceImpl implements SystemConfigService{
 
         if (maintenanceMode) {
             List<Account> users = accountRepository.findAll();
-            String subject = "Thông báo: Hệ thống đang bảo trì";
-            String message = """
-            Xin chào,
+            String subject = "Notice: System is under maintenance";
+            String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                    + "<h2 style='color: #d9534f;'>System Maintenance Notification</h2>"
+                    + "<p>Hello,</p>"
+                    + "<p>We would like to inform you that our system is currently undergoing maintenance to improve performance and security.</p>"
+                    + "<p>During this period, some features may be temporarily unavailable. We apologize for any inconvenience and appreciate your patience.</p>"
+                    + "<p>Thank you for your understanding and support.</p>"
+                    + "<p>Best regards,<br>The SparkMinds Team</p>"
+                    + "</div>";
 
-            Hệ thống sẽ được bảo trì trong thời gian sắp tới. Chúng tôi sẽ thông báo khi hệ thống hoạt động trở lại.
-
-            Trân trọng,
-            Đội ngũ quản trị.
-            """;
 
             for (Account user : users) {
-                emailSenderService.sendSimpleEmail(user.getEmail(), subject, message);
+                boolean isUserRole = user.getRoles().stream()
+                        .anyMatch(role -> "USER".equalsIgnoreCase(role.getName()));
+
+                if (isUserRole) {
+                    emailSenderService.sendHtmlEmail(user.getEmail(), subject, htmlContent);
+                }
             }
         }
 

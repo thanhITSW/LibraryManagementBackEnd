@@ -15,10 +15,13 @@ import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.InvalidatedToken;
+import nmtt.demo.entity.SystemConfig;
 import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.InvalidatedTokenRepository;
+import nmtt.demo.repository.SystemConfigRepository;
+import nmtt.demo.service.system.SystemConfigService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -29,6 +32,7 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 
@@ -38,6 +42,7 @@ import java.util.UUID;
 public class AuthenticationServiceImpl implements AuthenticationService{
     private final AccountRepository accountRepository;
     private final InvalidatedTokenRepository invalidatedTokenRepository;
+    private final SystemConfigService systemConfigService;
 
     @Value("${SIGNER_KEY}")
     private String SIGNER_KEY;
@@ -69,18 +74,19 @@ public class AuthenticationServiceImpl implements AuthenticationService{
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        var access_token = generateToken(account);
-        var refresh_token = generateRefreshToken(account);
+        if (systemConfigService.getConfig().isMaintenanceMode() &&
+                account.getRoles().stream().anyMatch(role -> "USER".equalsIgnoreCase(role.getName()))) {
+            throw new AppException(ErrorCode.FIX_SYSTEM);
+        }
 
-        return account.isActive() ?
-                AuthenticationResponse.builder()
-                        .access_token(access_token)
-                        .refresh_token(refresh_token)
-                        .build() :
-                AuthenticationResponse.builder()
-                        .access_token("Tài khoản của bạn chưa được kích hoạt")
-                        .build()
-                ;
+        return account.isActive()
+                ? AuthenticationResponse.builder()
+                .access_token(generateToken(account))
+                .refresh_token(generateRefreshToken(account))
+                .build()
+                : AuthenticationResponse.builder()
+                .access_token("Tài khoản của bạn chưa được kích hoạt")
+                .build();
     }
 
     /**
@@ -358,13 +364,21 @@ public class AuthenticationServiceImpl implements AuthenticationService{
     }
 
     /**
-     * Activates the account with the specified account ID.
+     * Activates the user account associated with the provided token.
      *
-     * @param accountId The ID of the account to be activated.
-     * @throws AppException If the account with the given ID does not exist.
+     * @param token The JWT token containing the user's account ID.
+     * @throws ParseException If there is an error while parsing the token.
+     * @throws JOSEException If there is an error during the token verification process.
+     * @throws AppException If the user account does not exist.
      */
     @Override
-    public void activeAccount(String accountId){
+    public void activeAccount(String token) throws ParseException, JOSEException {
+
+        var signedJWT = verifyToken(token, true);
+
+        String accountId = signedJWT.getJWTClaimsSet().getIssuer();
+        System.out.println(accountId);
+
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 

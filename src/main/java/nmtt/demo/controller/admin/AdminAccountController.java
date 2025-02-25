@@ -3,30 +3,33 @@ package nmtt.demo.controller.admin;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import nmtt.demo.dto.request.Account.AccountCreationRequest;
 import nmtt.demo.dto.request.Account.AccountUpdateRequest;
 import nmtt.demo.dto.request.Account.AdminCreationAccountRequest;
 import nmtt.demo.dto.response.Account.AccountResponse;
+import nmtt.demo.entity.Account;
 import nmtt.demo.service.account.AccountService;
+import nmtt.demo.service.search.account.AccountCriteria;
+import nmtt.demo.service.search.account.AccountQueryService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import static org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode.VIA_DTO;
 
 @RestController
 @RequestMapping("${admin-mapping}/accounts")
 @Slf4j
 @RequiredArgsConstructor
+@EnableSpringDataWebSupport(pageSerializationMode = VIA_DTO)
 public class AdminAccountController {
 
     private final AccountService accountService;
+    private final AccountQueryService accountQueryService;
 
     @GetMapping
     public ResponseEntity<List<AccountResponse>> getAllUsers() {
@@ -60,22 +63,10 @@ public class AdminAccountController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> searchUsers(
-            @RequestParam(required = false) String name,
-            @RequestParam(required = false) String bookTitle,
-            @RequestParam(required = false) String dateFrom,
-            @RequestParam(required = false) String dateTo,
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size) {
+    public ResponseEntity<Page<Account>> searchUsers(AccountCriteria criteria
+            , Pageable pageable) {
 
-        Page<AccountResponse> responses = accountService.searchMember(name, bookTitle, dateFrom, dateTo, page, size);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("data", responses.getContent());
-        response.put("currentPage", responses.getNumber());
-        response.put("totalItems", responses.getTotalElements());
-        response.put("totalPages", responses.getTotalPages());
-
-        return ResponseEntity.ok(response);
+        Page<Account> result = accountQueryService.findByCriteria(criteria, pageable);
+        return ResponseEntity.ok(result);
     }
 }

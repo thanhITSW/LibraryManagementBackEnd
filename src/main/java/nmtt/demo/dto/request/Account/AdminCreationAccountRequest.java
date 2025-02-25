@@ -6,8 +6,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import nmtt.demo.entity.Role;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -27,4 +30,5 @@ public class AdminCreationAccountRequest {
     @Size(min= 10, message = "Phone must be at least 10 characters")
     private String phone;
     private boolean active;
+    List<String> roles;
 }

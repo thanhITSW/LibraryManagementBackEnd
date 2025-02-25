@@ -7,5 +7,5 @@ import java.util.List;
 public interface BorrowingService {
     public void borrowBook(BookRequest request);
     public void returnBook(BookRequest request);
-    public List<Book> getBorrowedBooks(String accountId);
+    public List<Book> getBorrowedBooks();
 }
