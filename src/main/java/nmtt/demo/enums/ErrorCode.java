@@ -33,6 +33,7 @@ public enum ErrorCode {
     INVALID_JSON(1012, "INVALID_JSON", HttpStatus.BAD_REQUEST),
     NOT_FOUND(1012, "NOT_FOUND", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_MATCH(1012, "Password not match", HttpStatus.BAD_REQUEST),
+    UNSUPPORTED_MEDIA_TYPE(1013, "UNSUPPORTED_MEDIA_TYPE", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

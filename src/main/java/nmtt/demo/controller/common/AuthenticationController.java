@@ -2,10 +2,7 @@ package nmtt.demo.controller.common;
 
 import com.nimbusds.jose.JOSEException;
 import lombok.RequiredArgsConstructor;
-import nmtt.demo.dto.request.Account.AuthenticationRequest;
-import nmtt.demo.dto.request.Account.IntrospectRequest;
-import nmtt.demo.dto.request.Account.LogoutRequest;
-import nmtt.demo.dto.request.Account.RefreshRequest;
+import nmtt.demo.dto.request.Account.*;
 import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.service.authentication.AuthenticationService;
@@ -46,8 +43,13 @@ public class AuthenticationController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<String> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
+    public ResponseEntity<ApiResponse<String>> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
         authenticationService.activeAccount(token);
-        return ResponseEntity.ok("Active account successfully");
+
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Active account successfully")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }

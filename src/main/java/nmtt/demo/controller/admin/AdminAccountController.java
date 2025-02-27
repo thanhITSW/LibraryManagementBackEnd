@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AccountUpdateRequest;
 import nmtt.demo.dto.request.Account.AdminCreationAccountRequest;
+import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.service.account.AccountService;
@@ -56,10 +57,14 @@ public class AdminAccountController {
     }
 
     @DeleteMapping("/{userId}")
-    public ResponseEntity<String> deleteAccountById(@PathVariable("userId") String userId){
+    public ResponseEntity<ApiResponse<String>> deleteAccountById(@PathVariable("userId") String userId){
         accountService.deleteUserById(userId);
 
-        return ResponseEntity.ok("Account has been deleted");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Account has been deleted")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")

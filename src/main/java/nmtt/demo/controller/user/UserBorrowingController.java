@@ -2,6 +2,7 @@ package nmtt.demo.controller.user;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Book.BookRequest;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.Book;
@@ -10,6 +11,7 @@ import nmtt.demo.service.search.account.AccountCriteria;
 import nmtt.demo.service.search.account.AccountQueryService;
 import nmtt.demo.service.search.book.BookCriteria;
 import nmtt.demo.service.search.book.BookQueryService;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
@@ -27,22 +29,43 @@ public class UserBorrowingController {
     private final BookQueryService bookQueryService;
 
     @PostMapping("/borrow")
-    public ResponseEntity<?> borrowBook(@RequestBody BookRequest request) {
+    public ResponseEntity<ApiResponse<String>> borrowBook(@RequestBody BookRequest request) {
         try {
             borrowingService.borrowBook(request);
-            return ResponseEntity.ok(Map.of("message", "Book borrowed successfully!"));
+
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .result("Book borrowed successfully!")
+                    .build();
+
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .code(9999)
+                    .result("error" +  e.getMessage())
+                    .build();
+
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
     @PostMapping("/return")
-    public ResponseEntity<?> returnBook(@RequestBody BookRequest request) {
+    public ResponseEntity<ApiResponse<String>> returnBook(@RequestBody BookRequest request) {
         try {
             borrowingService.returnBook(request);
-            return ResponseEntity.ok(Map.of("message", "Book returned successfully!"));
+
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .result("Book returned successfully!")
+                    .build();
+
+            return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .result("error" + e.getMessage())
+                    .code(9999)
+                    .build();
+
+            return ResponseEntity.badRequest().body(response);
         }
     }
 
@@ -51,17 +74,20 @@ public class UserBorrowingController {
         List<Book> borrowedBooks = borrowingService.getBorrowedBooks();
 
         if (borrowedBooks.isEmpty()) {
-            return ResponseEntity.ok(Map.of("message", "No borrowed books found."));
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .result("No borrowed books found.")
+                    .code(1001)
+                    .build();
+            return ResponseEntity.ok(response);
         }
 
         return ResponseEntity.ok(borrowedBooks);
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<Book>> searchBook(BookCriteria criteria
-            , Pageable pageable) {
+    public ResponseEntity<Page<Book>> searchBook(@ParameterObject BookCriteria criteria
+            ,@ParameterObject Pageable pageable) {
 
         return ResponseEntity.ok(bookQueryService.findByCriteria(criteria, pageable));
     }
-
 }

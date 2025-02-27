@@ -24,42 +24,62 @@ public class UserAccountController {
     }
 
     @PostMapping("/request-change-mail")
-    public ResponseEntity<String> requestChangeMail(@RequestBody EmailRequest request) {
+    public ResponseEntity<ApiResponse<String>> requestChangeMail(@RequestBody EmailRequest request) {
         accountService.requestChangeMail(request);
 
-        return ResponseEntity.ok("Verification code has been sent to the new email");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Verification code has been sent to the new email")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-change-mail")
-    public ResponseEntity<String> verifyChangeMail(@RequestBody VerifyCodeRequest request) {
+    public ResponseEntity<ApiResponse<String>> verifyChangeMail(@RequestBody VerifyCodeRequest request) {
         accountService.verifyChangeMail(request);
 
-        return ResponseEntity.ok("Email has been successfully updated");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Email has been successfully updated")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/change-password")
-    public ResponseEntity<String> changePassword(
+    public ResponseEntity<ApiResponse<String>> changePassword(
             @RequestBody ChangePasswordRequest request) {
         accountService.changePassword(request);
 
-        return ResponseEntity.ok("Password has been successfully updated");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Password has been successfully updated")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/request-change-phone")
-    public ResponseEntity<String> requestChangePhone(
+    public ResponseEntity<ApiResponse<String>> requestChangePhone(
             @RequestBody ChangePhoneRequest request){
 
         String otp = accountService.requestChangePhone(request);
 
-        return ResponseEntity.ok("OTP sent successfully with otp: " + otp);
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("OTP sent successfully with otp: " + otp)
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/verify-change-phone")
-    public ResponseEntity<String> verifyChangePhone(
+    public ResponseEntity<ApiResponse<String>> verifyChangePhone(
             @RequestBody VerifyCodeRequest request){
 
         accountService.verifyChangePhone(request);
 
-        return ResponseEntity.ok("Phone number has been successfully updated");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Phone number has been successfully updated")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -81,6 +82,21 @@ public class GlobalExceptionHandler {
                 .body(ApiResponse.builder()
                         .code(ErrorCode.NOT_FOUND.getCode())
                         .message("The requested resource was not found.")
+                        .build());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        String unsupportedType = ex.getContentType() != null ? ex.getContentType().toString() : "unknown";
+        String supportedTypes = ex.getSupportedMediaTypes().toString();
+
+        String errorMessage = String.format("Content-Type '%s' is not supported. Supported types: %s",
+                unsupportedType, supportedTypes);
+
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.builder()
+                        .code(ErrorCode.UNSUPPORTED_MEDIA_TYPE.getCode())
+                        .message(errorMessage)
                         .build());
     }
 }

@@ -4,6 +4,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AccountCreationRequest;
+import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Account.EmailRequest;
 import nmtt.demo.dto.response.Account.AccountResponse;
 import nmtt.demo.service.account.AccountService;
@@ -27,16 +28,24 @@ public class CommonAccountController {
     }
 
     @PostMapping("/reset-pass")
-    public ResponseEntity<String> resetPass(@RequestBody EmailRequest request){
+    public ResponseEntity<ApiResponse<String>> resetPass(@RequestBody EmailRequest request){
         accountService.resetPass(request);
 
-        return ResponseEntity.ok("New password has been send your email");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("New password has been send your email")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/resend-link-active-account")
-    public ResponseEntity<String> resendLinkActiveAccount(@RequestBody EmailRequest request){
+    public ResponseEntity<ApiResponse<String>> resendLinkActiveAccount(@RequestBody EmailRequest request){
         accountService.resendLinkActiveAccount(request);
 
-        return ResponseEntity.ok("Link active account has been send your email");
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Link active account has been send your email")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 }

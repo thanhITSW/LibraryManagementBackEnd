@@ -3,6 +3,7 @@ package nmtt.demo.controller.admin;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Book.BookCreationRequest;
 import nmtt.demo.dto.request.Book.BookUpdateRequest;
 import nmtt.demo.dto.response.Book.BookResponse;
@@ -54,9 +55,14 @@ public class AdminBookController {
     }
 
     @DeleteMapping("/{bookId}")
-    public ResponseEntity<String> deleteBookById(@PathVariable("bookId") String bookId) {
+    public ResponseEntity<ApiResponse<String>> deleteBookById(@PathVariable("bookId") String bookId) {
         bookService.deleteBookById(bookId);
-        return ResponseEntity.ok("Delete book successfully"); // 204 No Content
+
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Delete book successfully")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/search")
@@ -67,9 +73,14 @@ public class AdminBookController {
     }
 
     @PostMapping("/import-csv")
-    public ResponseEntity<Map<String, String>> importDataByCsv(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<ApiResponse<String>> importDataByCsv(@RequestParam("file") MultipartFile file) {
         bookService.importBooksFromCsv(file);
-        return ResponseEntity.ok(Map.of("message", "Add data successfully"));
+
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .result("Add data successfully")
+                .build();
+
+        return ResponseEntity.ok(response);
     }
 
     @PostMapping("/{bookId}/upload")
