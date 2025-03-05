@@ -154,11 +154,11 @@ public class AccountServiceImpl implements AccountService{
      */
     @Override
     public AccountResponse getMyInfo(){
-        var context = SecurityContextHolder.getContext();
-        String email = context.getAuthentication().getName();
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
 
         Account account = accountRepository
-                .findAccountByEmail(email)
+                .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return accountMapper.toAccountResponse(account);
@@ -256,9 +256,13 @@ public class AccountServiceImpl implements AccountService{
     public void requestChangeMail(EmailRequest request) {
         String issuer = SecurityUtils.getIssuer();
         assert issuer != null;
-        accountRepository
+        Account account = accountRepository
                 .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        if(account.getEmail().equals(request.getEmail())){
+            throw new AppException(ErrorCode.EMAIL_INVALID);
+        }
 
         String verificationCode = String.format("%06d", (int) (Math.random() * 1000000));
 
@@ -320,38 +324,6 @@ public class AccountServiceImpl implements AccountService{
     }
 
     /**
-     * Searches for members based on the provided criteria: name, book title, and birth date range.
-     *
-     * @param name The name of the member to search for.
-     * @param bookTitle The book title associated with the member.
-     * @param dateFrom The start date of the birth date range.
-     * @param dateTo The end date of the birth date range.
-     * @param page The page number for pagination.
-     * @param size The size of each page.
-     * @return A page of AccountResponse objects that match the search criteria.
-     */
-    @Override
-    public Page<AccountResponse> searchMember(
-            String name,
-            String bookTitle,
-            String dateFrom,
-            String dateTo,
-            int page,
-            int size) {
-
-        Pageable pageable = PageRequest.of(page, size);
-
-        Specification<Account> spec = Specification
-                .where(AccountSearchSpecification.hasName(name))
-                .and(AccountSearchSpecification.hasBookTitle(bookTitle))
-                .and(AccountSearchSpecification.isBornInDateRange(dateFrom, dateTo));
-
-        Page<Account> accounts = accountRepository.findAll(spec, pageable);
-
-        return accounts.map(accountMapper::toAccountResponse);
-    }
-
-    /**
      * Changes the authenticated user's password.
      *
      * @param request contains old and new passwords.
@@ -381,10 +353,13 @@ public class AccountServiceImpl implements AccountService{
         String issuer = SecurityUtils.getIssuer();
         assert issuer != null;
 
-        accountRepository
+        Account account = accountRepository
                 .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        if(account.getPhone().equals(request.getPhone())){
+            throw new AppException(ErrorCode.PHONE_INVALID);
+        }
         String otp = String.format("%06d", (int) (Math.random() * 1000000));
 
         LocalDateTime createdAt = LocalDateTime.now();
@@ -398,6 +373,16 @@ public class AccountServiceImpl implements AccountService{
 
         otpPhoneRepository.save(otpPhone);
 
+        String subject = "Verify New Phone";
+        String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
+                + "<h2 style='color: #007bff;'>Verify Your Phone Change Request</h2>"
+                + "<p>Hello,</p>"
+                + "<p>We received a request to change your phone. Please use the verification code below to confirm this change:</p>"
+                + "<p style='font-size: 22px; font-weight: bold; color: #d9534f;'>" + otp + "</p>"
+                + "<p>This code is valid for a limited time. If you did not request this change, please ignore this email.</p>"
+                + "<p>Best regards,<br>The SparkMinds Team</p>"
+                + "</div>";
+        emailSenderService.sendHtmlEmail(account.getEmail(), subject, htmlContent);
         return otp;
     }
 

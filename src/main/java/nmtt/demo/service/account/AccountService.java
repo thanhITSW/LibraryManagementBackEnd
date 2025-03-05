@@ -17,11 +17,8 @@ public interface AccountService {
     void resetPass(EmailRequest request);
     void requestChangeMail(EmailRequest request);
     void verifyChangeMail(VerifyCodeRequest request);
-    Page<AccountResponse> searchMember(String name, String bookTitle, String dateFrom, String dateTo, int page, int size);
     void changePassword(ChangePasswordRequest request);
-
     String requestChangePhone(ChangePhoneRequest request);
     void verifyChangePhone(VerifyCodeRequest request);
-
     void resendLinkActiveAccount(EmailRequest request);
 }

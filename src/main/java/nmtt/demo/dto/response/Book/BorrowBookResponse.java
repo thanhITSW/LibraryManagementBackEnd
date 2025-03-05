@@ -11,6 +11,7 @@ import java.time.LocalDate;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class BorrowBookResponse {
+    String id;
     String bookId;
 
     String title;

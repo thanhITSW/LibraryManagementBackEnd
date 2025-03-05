@@ -118,6 +118,7 @@ public class BorrowingServiceImpl implements BorrowingService{
                 .findByAccountId(issuer);
 
         return borrowings.stream().map(borrowing -> BorrowBookResponse.builder()
+                .id(borrowing.getId())
                 .bookId(borrowing.getBook().getId())
                 .title(borrowing.getBook().getTitle())
                 .borrowDate(borrowing.getBorrowDate())
