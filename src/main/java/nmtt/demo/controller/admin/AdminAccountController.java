@@ -46,6 +46,11 @@ public class AdminAccountController {
         return ResponseEntity.status(HttpStatus.CREATED).body(accountResponse);
     }
 
+    @GetMapping("/{userId}")
+    public ResponseEntity<AccountResponse> getAccountById(@PathVariable("userId") String userId) {
+        AccountResponse accountResponse = accountService.getAccountById(userId);
+        return ResponseEntity.ok(accountResponse);
+    }
 
     @PutMapping("/{userId}")
     public ResponseEntity<AccountResponse> updateAccountById(
@@ -61,7 +66,7 @@ public class AdminAccountController {
         accountService.deleteUserById(userId);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Account has been deleted")
+                .message("Account has been deleted")
                 .build();
 
         return ResponseEntity.ok(response);

@@ -32,7 +32,7 @@ public class CommonAccountController {
         accountService.resetPass(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("New password has been send your email")
+                .message("New password has been send your email")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -43,9 +43,15 @@ public class CommonAccountController {
         accountService.resendLinkActiveAccount(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Link active account has been send your email")
+                .message("Link active account has been send your email")
                 .build();
 
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/my-info")
+    public ResponseEntity<AccountResponse> getMyInfo() {
+        AccountResponse accountResponse = accountService.getMyInfo();
+        return ResponseEntity.ok(accountResponse);
     }
 }

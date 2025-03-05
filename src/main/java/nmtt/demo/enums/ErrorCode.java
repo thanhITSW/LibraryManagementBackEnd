@@ -34,6 +34,7 @@ public enum ErrorCode {
     NOT_FOUND(1012, "NOT_FOUND", HttpStatus.BAD_REQUEST),
     PASSWORD_NOT_MATCH(1012, "Password not match", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_MEDIA_TYPE(1013, "UNSUPPORTED_MEDIA_TYPE", HttpStatus.BAD_REQUEST),
+    ACCOUNT_NOT_ACTIVE(1014, "Your account has not been activated, please activate your account", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

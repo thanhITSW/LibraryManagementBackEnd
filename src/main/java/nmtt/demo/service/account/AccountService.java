@@ -11,6 +11,7 @@ public interface AccountService {
     public AccountResponse adminCreateAccount(AdminCreationAccountRequest request);
     List<AccountResponse> getAccount();
     AccountResponse getMyInfo();
+    AccountResponse getAccountById(String id);
     AccountResponse updateAccountById(String accountId, AccountUpdateRequest request);
     void deleteUserById(String accountId);
     void resetPass(EmailRequest request);

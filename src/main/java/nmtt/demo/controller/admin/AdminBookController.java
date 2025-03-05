@@ -59,7 +59,7 @@ public class AdminBookController {
         bookService.deleteBookById(bookId);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Delete book successfully")
+                .message("Delete book successfully")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -77,7 +77,7 @@ public class AdminBookController {
         bookService.importBooksFromCsv(file);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Add data successfully")
+                .message("Add data successfully")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -87,12 +87,20 @@ public class AdminBookController {
     public ResponseEntity<?> uploadBookImage(@PathVariable String bookId, @RequestParam("file") MultipartFile file) {
         try {
             if (file.getSize() > 2 * 1024 * 1024) {
-                return ResponseEntity.badRequest().body(Map.of("error", "File size must be under 2MB!"));
+                ApiResponse<String> response = ApiResponse.<String>builder()
+                        .message("File size must be under 2MB!")
+                        .code(9999)
+                        .build();
+                return ResponseEntity.badRequest().body(response);
             }
 
             String contentType = file.getContentType();
             if (contentType == null || (!contentType.equals("image/png") && !contentType.equals("image/jpeg"))) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Only PNG and JPG images are allowed!"));
+                ApiResponse<String> response = ApiResponse.<String>builder()
+                        .message("Only PNG and JPG images are allowed!")
+                        .code(9999)
+                        .build();
+                return ResponseEntity.badRequest().body(response);
             }
 
             Map<String, Object> uploadResult = cloudinaryService.uploadFile(file, "trainJava");
@@ -104,8 +112,12 @@ public class AdminBookController {
             return ResponseEntity.ok(bookResponse);
 
         } catch (IOException e) {
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .message("Error uploading file: " + e.getMessage())
+                    .code(9999)
+                    .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error uploading file: " + e.getMessage()));
+                    .body(response);
         }
     }
 
@@ -125,10 +137,18 @@ public class AdminBookController {
     public ResponseEntity<?> deleteBookImage(@PathVariable String bookId) {
         try {
             bookService.deleteBookImage(bookId);
-            return ResponseEntity.ok(Map.of("message", "Book image deleted successfully!"));
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .message("Book image deleted successfully!")
+                    .code(9999)
+                    .build();
+            return ResponseEntity.ok(response);
         } catch (Exception e) {
+            ApiResponse<String> response = ApiResponse.<String>builder()
+                    .message("Error deleting file: " + e.getMessage())
+                    .code(9999)
+                    .build();
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Error deleting file: " + e.getMessage()));
+                    .body(response);
         }
     }
 }

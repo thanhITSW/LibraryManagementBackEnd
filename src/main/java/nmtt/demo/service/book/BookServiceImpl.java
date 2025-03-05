@@ -19,7 +19,6 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -27,7 +26,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -65,6 +63,20 @@ public class BookServiceImpl implements BookService{
     public List<BookResponse> getAllBook(){
         return bookRepository.findAll().stream()
                 .map(bookMapper::toBookResponse).toList();
+    }
+
+    /**
+     * Retrieves a book by its ID from the repository.
+     *
+     * @param id The unique identifier of the book to be retrieved.
+     * @return A {@link BookResponse} object containing the details of the book if found.
+     *         If the book is not found, a {@link RuntimeException} is thrown with the message "Book not found".
+     */
+    @Override
+    public BookResponse getBookById(String id){
+        return bookRepository.findById(id)
+               .map(bookMapper::toBookResponse)
+               .orElseThrow(() -> new RuntimeException("Book not found"));
     }
 
     /**

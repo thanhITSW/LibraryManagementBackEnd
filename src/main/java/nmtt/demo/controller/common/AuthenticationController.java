@@ -42,12 +42,20 @@ public class AuthenticationController {
         return ResponseEntity.noContent().build();
     }
 
+    @PostMapping("/introspect")
+    public ResponseEntity<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
+            throws ParseException, JOSEException {
+        IntrospectResponse result = authenticationService.introspect(request);
+        return ResponseEntity.ok(result);
+
+    }
+
     @GetMapping("/active")
     public ResponseEntity<ApiResponse<String>> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
         authenticationService.activeAccount(token);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Active account successfully")
+                .message("Active account successfully")
                 .build();
 
         return ResponseEntity.ok(response);

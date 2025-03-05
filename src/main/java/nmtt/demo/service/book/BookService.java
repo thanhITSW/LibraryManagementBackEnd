@@ -12,6 +12,7 @@ public interface BookService {
     public BookResponse createBook(BookCreationRequest request);
 
     public List<BookResponse> getAllBook();
+    public BookResponse getBookById(String id);
 
     public BookResponse updateBookById(String bookId, BookUpdateRequest request);
 

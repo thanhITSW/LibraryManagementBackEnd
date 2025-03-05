@@ -3,18 +3,21 @@ package nmtt.demo.dto.response.Book;
 import lombok.*;
 import lombok.experimental.FieldDefaults;
 
+import java.time.LocalDate;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-public class BookResponse {
-    String id;
+public class BorrowBookResponse {
+    String bookId;
+
     String title;
-    String author;
-    String category;
-    String imageUrl;
-    int totalCopies;
-    int availableCopies;
-    boolean available;
+
+    LocalDate borrowDate;
+
+    LocalDate returnDate;
+
+    boolean returned;
 }

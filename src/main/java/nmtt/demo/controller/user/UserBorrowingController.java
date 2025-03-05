@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.dto.request.Book.BookRequest;
+import nmtt.demo.dto.response.Book.BorrowBookResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.Book;
 import nmtt.demo.service.borrowing.BorrowingService;
@@ -34,14 +35,14 @@ public class UserBorrowingController {
             borrowingService.borrowBook(request);
 
             ApiResponse<String> response = ApiResponse.<String>builder()
-                    .result("Book borrowed successfully!")
+                    .message("Book borrowed successfully!")
                     .build();
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             ApiResponse<String> response = ApiResponse.<String>builder()
                     .code(9999)
-                    .result("error" +  e.getMessage())
+                    .message("error" +  e.getMessage())
                     .build();
 
             return ResponseEntity.badRequest().body(response);
@@ -54,14 +55,14 @@ public class UserBorrowingController {
             borrowingService.returnBook(request);
 
             ApiResponse<String> response = ApiResponse.<String>builder()
-                    .result("Book returned successfully!")
+                    .message("Book returned successfully!")
                     .build();
 
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
 
             ApiResponse<String> response = ApiResponse.<String>builder()
-                    .result("error" + e.getMessage())
+                    .message("error" + e.getMessage())
                     .code(9999)
                     .build();
 
@@ -71,11 +72,11 @@ public class UserBorrowingController {
 
     @GetMapping("/borrowed-books")
     public ResponseEntity<?> getBorrowedBooks() {
-        List<Book> borrowedBooks = borrowingService.getBorrowedBooks();
+        List<BorrowBookResponse> borrowedBooks = borrowingService.getBorrowedBooks();
 
         if (borrowedBooks.isEmpty()) {
             ApiResponse<String> response = ApiResponse.<String>builder()
-                    .result("No borrowed books found.")
+                    .message("No borrowed books found.")
                     .code(1001)
                     .build();
             return ResponseEntity.ok(response);

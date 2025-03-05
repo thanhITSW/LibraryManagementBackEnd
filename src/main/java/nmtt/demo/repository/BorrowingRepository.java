@@ -10,5 +10,6 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, String> {
     boolean existsByAccountIdAndBookIdAndReturnedFalse(String accountId, String bookId);
     Optional<Borrowing> findByAccountIdAndBookIdAndReturnedFalse(String accountId, String bookId);
     List<Borrowing> findByAccountIdAndReturnedFalse(String accountId);
+    List<Borrowing> findByAccountId(String accountId);
 
 }

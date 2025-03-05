@@ -64,7 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<String>> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        return ResponseEntity.badRequest().body(ApiResponse.<String>builder().result(errorMessage).build());
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder().message(errorMessage).build());
     }
 
     @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)

@@ -15,12 +15,10 @@ import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.InvalidatedToken;
-import nmtt.demo.entity.SystemConfig;
 import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.InvalidatedTokenRepository;
-import nmtt.demo.repository.SystemConfigRepository;
 import nmtt.demo.service.system.SystemConfigService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -32,14 +30,13 @@ import java.text.ParseException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
-import java.util.Optional;
 import java.util.StringJoiner;
 import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AuthenticationServiceImpl implements AuthenticationService{
+public class AuthenticationServiceImpl implements AuthenticationService {
     private final AccountRepository accountRepository;
     private final InvalidatedTokenRepository invalidatedTokenRepository;
     private final SystemConfigService systemConfigService;
@@ -61,17 +58,17 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @throws AppException If the user does not exist or if the password does not match.
      */
     @Override
-    public AuthenticationResponse authenticate(AuthenticationRequest request){
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         var account = accountRepository
                 .findAccountByEmail(request.getEmail())
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         PasswordEncoder passwordEncoder = new BCryptPasswordEncoder(10);
-        boolean authenticated =  passwordEncoder
+        boolean authenticated = passwordEncoder
                 .matches(request.getPassword(), account.getPassword());
 
-        if(!authenticated){
-            throw new AppException(ErrorCode.UNAUTHENTICATED);
+        if (!authenticated) {
+            throw new AppException(ErrorCode.PASSWORD_NOT_MATCH);
         }
 
         if (systemConfigService.getConfig().isMaintenanceMode() &&
@@ -79,13 +76,13 @@ public class AuthenticationServiceImpl implements AuthenticationService{
             throw new AppException(ErrorCode.FIX_SYSTEM);
         }
 
-        return account.isActive()
-                ? AuthenticationResponse.builder()
+        if (!account.isActive()) {
+            throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
+        }
+
+        return AuthenticationResponse.builder()
                 .access_token(generateToken(account))
                 .refresh_token(generateRefreshToken(account))
-                .build()
-                : AuthenticationResponse.builder()
-                .access_token("Tài khoản của bạn chưa được kích hoạt")
                 .build();
     }
 
@@ -94,7 +91,7 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      *
      * @param request The logout request containing the token to be invalidated.
      * @throws ParseException If there is an error while parsing the token.
-     * @throws JOSEException If there is an error during the token verification process.
+     * @throws JOSEException  If there is an error during the token verification process.
      */
     @Override
     public void logout(LogoutRequest request) throws ParseException, JOSEException {
@@ -120,12 +117,12 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * Verifies a JWT token, ensuring it is valid and not expired.
      * Optionally checks if the token is a refresh token with a customizable expiration duration.
      *
-     * @param token The JWT token to be verified.
+     * @param token     The JWT token to be verified.
      * @param isRefresh A flag indicating if the token is a refresh token.
      * @return The verified SignedJWT if valid.
-     * @throws JOSEException If there is an error during the verification process.
+     * @throws JOSEException  If there is an error during the verification process.
      * @throws ParseException If there is an error while parsing the token.
-     * @throws AppException If the token is invalid, expired, or has been invalidated.
+     * @throws AppException   If the token is invalid, expired, or has been invalidated.
      */
     @Override
     public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
@@ -144,12 +141,12 @@ public class AuthenticationServiceImpl implements AuthenticationService{
 
         var verified = signedJWT.verify(verifier);
 
-        if(!(verified && expiryTime.after(new Date()))){
+        if (!(verified && expiryTime.after(new Date()))) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
-        if(invalidatedTokenRepository
-                .existsById(signedJWT.getJWTClaimsSet().getJWTID())){
+        if (invalidatedTokenRepository
+                .existsById(signedJWT.getJWTClaimsSet().getJWTID())) {
             throw new AppException(ErrorCode.UNAUTHENTICATED);
         }
 
@@ -162,8 +159,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @param request The refresh request containing the token to be refreshed.
      * @return An AuthenticationResponse containing the new token and authentication status.
      * @throws ParseException If there is an error while parsing the token.
-     * @throws JOSEException If there is an error during the token verification process.
-     * @throws AppException If the token is invalid or the user is not found.
+     * @throws JOSEException  If there is an error during the token verification process.
+     * @throws AppException   If the token is invalid or the user is not found.
      */
     @Override
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException {
@@ -173,7 +170,7 @@ public class AuthenticationServiceImpl implements AuthenticationService{
         var expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
         var token_type = signedJWT.getJWTClaimsSet().getClaim("token_type");
 
-        if(!token_type.equals("refresh")){
+        if (!token_type.equals("refresh")) {
             throw new AppException(ErrorCode.INVALID_TOKEN);
         }
 
@@ -188,8 +185,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
         var email = signedJWT.getJWTClaimsSet().getSubject();
 
         var user = accountRepository
-                        .findAccountByEmail(email)
-                        .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
+                .findAccountByEmail(email)
+                .orElseThrow(() -> new AppException(ErrorCode.UNAUTHENTICATED));
 
         var access_token = generateToken(user);
         var refresh_token = regenerateRefreshToken(request.getToken());
@@ -208,7 +205,7 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @throws RuntimeException If there is an error while generating the token.
      */
     @Override
-    public String generateToken(Account account){
+    public String generateToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -248,7 +245,7 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @throws RuntimeException If token creation fails.
      */
     @Override
-    public String generateRefreshToken(Account account){
+    public String generateRefreshToken(Account account) {
         JWSHeader header = new JWSHeader(JWSAlgorithm.HS512);
 
         JWTClaimsSet jwtClaimsSet = new JWTClaimsSet.Builder()
@@ -321,16 +318,16 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      *
      * @param request The request containing the token to be introspected.
      * @return An IntrospectResponse indicating whether the token is valid.
-     * @throws JOSEException If there is an error during the token verification process.
+     * @throws JOSEException  If there is an error during the token verification process.
      * @throws ParseException If there is an error while parsing the token.
      */
     @Override
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
         boolean invalid = true;
-        try{
+        try {
             verifyToken(token, false);
-        }catch (AppException e){
+        } catch (AppException e) {
             invalid = false;
         }
 
@@ -346,13 +343,13 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      * @return A string representing the account's roles and permissions in the scope.
      */
     @Override
-    public String buildScope(Account account){
+    public String buildScope(Account account) {
         StringJoiner stringJoiner = new StringJoiner("");
-        if(!CollectionUtils.isEmpty(account.getRoles())){
+        if (!CollectionUtils.isEmpty(account.getRoles())) {
             account.getRoles().forEach(role -> {
                 stringJoiner.add("ROLE_" + role.getName());
 
-                if(!CollectionUtils.isEmpty(role.getPermissions())){
+                if (!CollectionUtils.isEmpty(role.getPermissions())) {
                     role.getPermissions().forEach(permission -> {
                         stringJoiner.add(permission.getName());
                     });
@@ -368,8 +365,8 @@ public class AuthenticationServiceImpl implements AuthenticationService{
      *
      * @param token The JWT token containing the user's account ID.
      * @throws ParseException If there is an error while parsing the token.
-     * @throws JOSEException If there is an error during the token verification process.
-     * @throws AppException If the user account does not exist.
+     * @throws JOSEException  If there is an error during the token verification process.
+     * @throws AppException   If the user account does not exist.
      */
     @Override
     public void activeAccount(String token) throws ParseException, JOSEException {

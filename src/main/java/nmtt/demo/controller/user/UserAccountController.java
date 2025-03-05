@@ -28,7 +28,7 @@ public class UserAccountController {
         accountService.requestChangeMail(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Verification code has been sent to the new email")
+                .message("Verification code has been sent to the new email")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -39,7 +39,7 @@ public class UserAccountController {
         accountService.verifyChangeMail(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Email has been successfully updated")
+                .message("Email has been successfully updated")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -51,7 +51,7 @@ public class UserAccountController {
         accountService.changePassword(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Password has been successfully updated")
+                .message("Password has been successfully updated")
                 .build();
 
         return ResponseEntity.ok(response);
@@ -64,7 +64,7 @@ public class UserAccountController {
         String otp = accountService.requestChangePhone(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("OTP sent successfully with otp: " + otp)
+                .message("OTP sent successfully with otp: " + otp)
                 .build();
 
         return ResponseEntity.ok(response);
@@ -77,7 +77,7 @@ public class UserAccountController {
         accountService.verifyChangePhone(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
-                .result("Phone number has been successfully updated")
+                .message("Phone number has been successfully updated")
                 .build();
 
         return ResponseEntity.ok(response);

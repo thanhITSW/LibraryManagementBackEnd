@@ -4,6 +4,7 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Book.BookRequest;
+import nmtt.demo.dto.response.Book.BorrowBookResponse;
 import nmtt.demo.entity.Account;
 import nmtt.demo.entity.Book;
 import nmtt.demo.entity.Borrowing;
@@ -100,23 +101,28 @@ public class BorrowingServiceImpl implements BorrowingService{
     }
 
     /**
-     * Retrieves a list of books currently borrowed by an account.
-     * This method fetches all borrowing records for the given account that have not been returned,
-     * and returns the associated book details.
+     * Retrieves a list of books currently borrowed by the authenticated user.
+     * This method fetches all active borrowings (not returned) for the current user
+     * and returns a list of the associated books.
      *
-     * @param accountId The ID of the account whose borrowed books are to be retrieved.
-     * @return A list of books that are currently borrowed by the specified account.
+     * @return A List of Book objects representing the books currently borrowed by the user.
+     *         The list will be empty if the user has no active borrowings.
+     * @throws AssertionError if the issuer (authenticated user) is null.
      */
     @Transactional
     @Override
-    public List<Book> getBorrowedBooks() {
+    public List<BorrowBookResponse> getBorrowedBooks() {
         String issuer = SecurityUtils.getIssuer();
         assert issuer != null;
         List<Borrowing> borrowings = borrowingRepository
-                .findByAccountIdAndReturnedFalse(issuer);
+                .findByAccountId(issuer);
 
-        return borrowings.stream()
-                .map(Borrowing::getBook)
-                .collect(Collectors.toList());
+        return borrowings.stream().map(borrowing -> BorrowBookResponse.builder()
+                .bookId(borrowing.getBook().getId())
+                .title(borrowing.getBook().getTitle())
+                .borrowDate(borrowing.getBorrowDate())
+                .returnDate(borrowing.getReturnDate())
+                .returned(borrowing.isReturned())
+                .build()).collect(Collectors.toList());
     }
 }

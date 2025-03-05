@@ -19,5 +19,7 @@ public class AccountUpdateRequest {
     String lastName;
     List<String> roles;
     boolean active;
+
+    @Size(min = 10, message = "Phone must be at least 10 characters")
     String phone;
 }

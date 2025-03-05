@@ -25,6 +25,10 @@ public class AccountQueryService extends QueryService<Account>{
     private Specification<Account> createSpecification(AccountCriteria criteria) {
         Specification<Account> spec = Specification.where(null);
 
+        if (criteria.getEmail() != null) {
+            spec = spec.and(buildStringSpecification(criteria.getEmail(), Account_.email));
+        }
+
         if (criteria.getFirstName() != null) {
             spec = spec.and(buildStringSpecification(criteria.getFirstName(), Account_.firstName));
         }

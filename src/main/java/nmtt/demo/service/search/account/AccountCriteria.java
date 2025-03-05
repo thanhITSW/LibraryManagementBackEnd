@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 @Data
 public class AccountCriteria implements Serializable {
+    private StringFilter email;
     // Supports: equals, contains, doesNotContain, in, notIn, specified
     private StringFilter firstName;
 

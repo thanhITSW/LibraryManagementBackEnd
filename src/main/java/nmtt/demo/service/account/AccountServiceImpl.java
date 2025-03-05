@@ -138,10 +138,12 @@ public class AccountServiceImpl implements AccountService{
      */
     @Override
     public List<AccountResponse> getAccount(){
-        return accountRepository
-                .findAll()
+        return accountRepository.findAll()
                 .stream()
-                .map(accountMapper::toAccountResponse).toList();
+                .filter(account -> account.getRoles().stream()
+                        .anyMatch(role -> "USER".equals(role.getName())))
+                .map(accountMapper::toAccountResponse)
+                .toList();
     }
 
     /**
@@ -158,6 +160,22 @@ public class AccountServiceImpl implements AccountService{
         Account account = accountRepository
                 .findAccountByEmail(email)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        return accountMapper.toAccountResponse(account);
+    }
+
+    /**
+     * Retrieves an account by its unique identifier.
+     *
+     * @param id The unique identifier of the account to retrieve.
+     * @return An AccountResponse object containing the account details.
+     * @throws AppException If no account is found with the given id, with error code USER_NOT_EXISTED.
+     */
+    @Override
+    public AccountResponse getAccountById(String id){
+        Account account = accountRepository
+               .findById(id)
+               .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
         return accountMapper.toAccountResponse(account);
     }
