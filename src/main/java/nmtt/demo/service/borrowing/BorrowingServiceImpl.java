@@ -13,10 +13,12 @@ import nmtt.demo.exception.AppException;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.BookRepository;
 import nmtt.demo.repository.BorrowingRepository;
+import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.utils.SecurityUtils;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,6 +29,7 @@ public class BorrowingServiceImpl implements BorrowingService{
     private final BorrowingRepository borrowingRepository;
     private final AccountRepository accountRepository;
     private final BookRepository bookRepository;
+    private final ActivityLogService logService;
 
     /**
      * Allows a user to borrow a book if available.
@@ -70,7 +73,11 @@ public class BorrowingServiceImpl implements BorrowingService{
                 .returned(false)
                 .build();
 
-        borrowingRepository.save(borrowing);
+        Borrowing savedBorrowing = borrowingRepository.save(borrowing);
+
+        HashMap<String, Object> newData = toMap(savedBorrowing);
+        logService.log("BORROW_BOOK", "BORROWING", savedBorrowing.getId(),
+                "User borrowed a book", null, newData);
     }
 
     /**
@@ -89,15 +96,21 @@ public class BorrowingServiceImpl implements BorrowingService{
                 .findByAccountIdAndBookIdAndReturnedFalse(issuer, request.getBookId())
                 .orElseThrow(() -> new AppException(ErrorCode.BORROW_RECORD_NOT_FOUND));
 
+        HashMap<String, Object> oldData = toMap(borrowing);
+
         //Update status book
         borrowing.setReturned(true);
         borrowing.setReturnDate(LocalDate.now());
-        borrowingRepository.save(borrowing);
+        Borrowing updatedBorrowing = borrowingRepository.save(borrowing);
 
         //Increase the number of books available
-        Book book = borrowing.getBook();
+        Book book = updatedBorrowing.getBook();
         book.setAvailableCopies(book.getAvailableCopies() + 1);
         bookRepository.save(book);
+
+        HashMap<String, Object> newData = toMap(updatedBorrowing);
+        logService.log("UPDATE", "BORROWING", borrowing.getId(),
+                "User returned a book", oldData, newData);
     }
 
     /**
@@ -125,5 +138,16 @@ public class BorrowingServiceImpl implements BorrowingService{
                 .returnDate(borrowing.getReturnDate())
                 .returned(borrowing.isReturned())
                 .build()).collect(Collectors.toList());
+    }
+
+    private HashMap<String, Object> toMap(Borrowing borrowing) {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", borrowing.getId());
+        data.put("accountId", borrowing.getAccount().getId());
+        data.put("bookId", borrowing.getBook().getId());
+        data.put("borrowDate", borrowing.getBorrowDate());
+        data.put("returnDate", borrowing.getReturnDate());
+        data.put("returned", borrowing.isReturned());
+        return data;
     }
 }

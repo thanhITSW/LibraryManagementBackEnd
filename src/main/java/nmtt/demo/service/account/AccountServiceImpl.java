@@ -16,21 +16,19 @@ import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.EmailVerificationRepository;
 import nmtt.demo.repository.OtpPhoneRepository;
 import nmtt.demo.repository.RoleRepository;
+import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.authentication.AuthenticationService;
 import nmtt.demo.service.email.EmailSenderService;
 import nmtt.demo.utils.SecurityUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -43,6 +41,7 @@ public class AccountServiceImpl implements AccountService{
     private final EmailVerificationRepository emailVerificationRepository;
     private final OtpPhoneRepository otpPhoneRepository;
     private final AuthenticationService authenticationService;
+    private final ActivityLogService logService;
 
     @Value("${URL_API}")
     private String urlApi;
@@ -112,6 +111,10 @@ public class AccountServiceImpl implements AccountService{
 
         account.setRoles(roles);
         account = accountRepository.save(account);
+
+        Map<String, Object> newData = toMap(account);
+        logService.log("CREATE", "ACCOUNT", account.getId(),
+                "Admin created a new account", null, newData);
 
         String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
                 + "<h2 style='color: #007bff;'>Your New Account Has Been Created</h2>"
@@ -193,7 +196,9 @@ public class AccountServiceImpl implements AccountService{
     public AccountResponse updateAccountById(String accountId, AccountUpdateRequest request){
         Account account = accountRepository
                 .findById(accountId)
-                .orElseThrow(() -> new RuntimeException("Account not found") );;
+                .orElseThrow(() -> new RuntimeException("Account not found") );
+
+        Map<String, Object> oldData = toMap(account);
 
         accountMapper.updateAccount(account, request);
 
@@ -201,7 +206,12 @@ public class AccountServiceImpl implements AccountService{
                 .findAllById(request.getRoles());
 
         account.setRoles(new HashSet<>(roles));
-        return accountMapper.toAccountResponse(accountRepository.save(account));
+
+        Account updatedAccount = accountRepository.save(account);
+        Map<String, Object> newData = toMap(updatedAccount);
+        logService.log("UPDATE", "ACCOUNT", accountId,
+                "Admin updated account", oldData, newData);
+        return accountMapper.toAccountResponse(updatedAccount);
     }
 
     /**
@@ -212,7 +222,15 @@ public class AccountServiceImpl implements AccountService{
     @Transactional
     @Override
     public void deleteUserById(String accountId){
+        Account account = accountRepository
+                .findById(accountId)
+                .orElseThrow(() -> new RuntimeException("Account not found") );
+
+        Map<String, Object> oldData = toMap(account);
         accountRepository.deleteById(accountId);
+
+        logService.log("DELETE", "ACCOUNT", accountId,
+                "Admin deleted account", oldData, null);
     }
 
     /**
@@ -306,8 +324,13 @@ public class AccountServiceImpl implements AccountService{
                 .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        Map<String, Object> oldData = toMap(account);
+
         account.setEmail(verification.getNewEmail());
-        accountRepository.save(account);
+        Account updatedAccount = accountRepository.save(account);
+
+        logService.log("UPDATE", "ACCOUNT", account.getId(),
+                "User changed email", oldData, toMap(updatedAccount));
 
         emailVerificationRepository.delete(verification);
 
@@ -395,18 +418,23 @@ public class AccountServiceImpl implements AccountService{
                .findByOtpAndAccountIdAndCreatedAtAfter(request.getOtp(), issuer, LocalDateTime.now().minusMinutes(5))
                .orElseThrow(() -> new AppException(ErrorCode.INVALID_OTP));
 
-        accountRepository
+        Account account = accountRepository
                .findById(issuer)
                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
 
+        Map<String, Object> oldData = toMap(account);
+
         String newPhone = otpPhone.getPhone();
-        accountRepository
+        Account updateAccount = accountRepository
                .findById(otpPhone.getAccountId())
-               .map(account -> {
-                    account.setPhone(newPhone);
-                    return accountRepository.save(account);
+               .map(ac -> {
+                    ac.setPhone(newPhone);
+                    return accountRepository.save(ac);
                 })
                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        logService.log("UPDATE", "ACCOUNT", account.getId(),
+                "User changed phone", oldData, toMap(updateAccount));
 
         otpPhoneRepository.delete(otpPhone);
     }
@@ -436,5 +464,17 @@ public class AccountServiceImpl implements AccountService{
 
         emailSenderService.sendHtmlEmail(account.getEmail(), "Verify account"
                 , htmlContent);
+    }
+
+    private Map<String, Object> toMap(Account account) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("id", account.getId());
+        data.put("email", account.getEmail());
+        data.put("firstName", account.getFirstName());
+        data.put("lastName", account.getLastName());
+        data.put("dob", account.getDob());
+        data.put("phone", account.getPhone());
+        data.put("active", account.isActive());
+        return data;
     }
 }

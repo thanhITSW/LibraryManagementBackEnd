@@ -7,10 +7,12 @@ import nmtt.demo.entity.Account;
 import nmtt.demo.entity.SystemConfig;
 import nmtt.demo.repository.AccountRepository;
 import nmtt.demo.repository.SystemConfigRepository;
+import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.email.EmailSenderService;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -20,6 +22,7 @@ public class SystemConfigServiceImpl implements SystemConfigService{
     private final SystemConfigRepository systemConfigRepository;
     private final AccountRepository accountRepository;
     private final EmailSenderService emailSenderService;
+    private final ActivityLogService logService;
 
     /**
      * Retrieves the system configuration.
@@ -49,6 +52,8 @@ public class SystemConfigServiceImpl implements SystemConfigService{
     @Override
     public SystemConfig updateMaintenanceMode(boolean maintenanceMode) {
         SystemConfig config = getConfig();
+        HashMap<String, Object> oldData = toMap(config);
+
         config.setMaintenanceMode(maintenanceMode);
 
         if (maintenanceMode) {
@@ -74,6 +79,19 @@ public class SystemConfigServiceImpl implements SystemConfigService{
             }
         }
 
-        return systemConfigRepository.save(config);
+        SystemConfig updatedConfig = systemConfigRepository.save(config);
+
+        HashMap<String, Object> newData = toMap(updatedConfig);
+        logService.log("UPDATE", "SYSTEM_CONFIG", updatedConfig.getId().toString(),
+                "Admin updated maintenance mode", oldData, newData);
+
+        return updatedConfig;
+    }
+
+    private HashMap<String, Object> toMap(SystemConfig config) {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", config.getId());
+        data.put("maintenanceMode", config.isMaintenanceMode());
+        return data;
     }
 }

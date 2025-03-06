@@ -14,6 +14,7 @@ import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
+import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.cloudinary.CloudinaryService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -25,6 +26,7 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 @Service
@@ -34,6 +36,7 @@ public class BookServiceImpl implements BookService{
     private final BookRepository bookRepository;
     private final BookMapper bookMapper;
     private final CloudinaryService cloudinaryService;
+    private final ActivityLogService logService;
 
     /**
      * Creates a new book with the provided details.
@@ -50,8 +53,13 @@ public class BookServiceImpl implements BookService{
         }
 
         Book book = bookMapper.toBook(request);
+        Book savedBook = bookRepository.save(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        HashMap<String, Object> newData = toMap(savedBook);
+        logService.log("CREATE", "BOOK", savedBook.getId(),
+                "Admin created a new book", null, newData);
+
+        return bookMapper.toBookResponse(savedBook);
     }
 
     /**
@@ -94,9 +102,16 @@ public class BookServiceImpl implements BookService{
                 .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        bookMapper.updateBook(book, request);
+        HashMap<String, Object> oldData = toMap(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        bookMapper.updateBook(book, request);
+        Book updatedBook = bookRepository.save(book);
+
+        HashMap<String, Object> newData = toMap(updatedBook);
+        logService.log("UPDATE", "BOOK", bookId,
+                "Admin updated book", oldData, newData);
+
+        return bookMapper.toBookResponse(updatedBook);
     }
 
     /**
@@ -107,8 +122,17 @@ public class BookServiceImpl implements BookService{
     @Transactional
     @Override
     public void deleteBookById(String bookId){
+        Book book = bookRepository
+                .findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        HashMap<String, Object> oldData = toMap(book);
+
         deleteBookImage(bookId);
         bookRepository.deleteById(bookId);
+
+        logService.log("DELETE", "BOOK", bookId,
+                "Admin deleted book", oldData, null);
     }
 
     /**
@@ -209,6 +233,8 @@ public class BookServiceImpl implements BookService{
                 .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
+        HashMap<String, Object> oldData = toMap(book);
+
         // delete image on Cloudinary if have
         if (book.getImagePublicId() != null) {
             try {
@@ -221,9 +247,13 @@ public class BookServiceImpl implements BookService{
         // update image in database
         book.setImageUrl(imageUrl);
         book.setImagePublicId(publicId);
-        bookRepository.save(book);
+        Book updatedBook = bookRepository.save(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        HashMap<String, Object> newData = toMap(updatedBook);
+        logService.log("UPDATE", "BOOK", bookId,
+                "Admin updated book image", oldData, newData);
+
+        return bookMapper.toBookResponse(updatedBook);
     }
 
     /**
@@ -268,5 +298,19 @@ public class BookServiceImpl implements BookService{
         book.setImageUrl(null);
         book.setImagePublicId(null);
         bookRepository.save(book);
+    }
+
+    private HashMap<String, Object> toMap(Book book) {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", book.getId());
+        data.put("title", book.getTitle());
+        data.put("author", book.getAuthor());
+        data.put("category", book.getCategory());
+        data.put("totalCopies", book.getTotalCopies());
+        data.put("availableCopies", book.getAvailableCopies());
+        data.put("imageUrl", book.getImageUrl());
+        data.put("imagePublicId", book.getImagePublicId());
+        data.put("available", book.isAvailable());
+        return data;
     }
 }
