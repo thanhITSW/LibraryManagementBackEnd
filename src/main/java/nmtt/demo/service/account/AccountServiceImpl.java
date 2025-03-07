@@ -43,8 +43,8 @@ public class AccountServiceImpl implements AccountService{
     private final AuthenticationService authenticationService;
     private final ActivityLogService logService;
 
-    @Value("${URL_API}")
-    private String urlApi;
+    @Value("${URL_CLIENT}")
+    private String url_client;
 
     /**
      * Creates a new user account.
@@ -70,7 +70,7 @@ public class AccountServiceImpl implements AccountService{
         account = accountRepository.save(account);
         var token = authenticationService.generateToken(account);
 
-        String url_active = urlApi + "common/auth/active?token=" + token;
+        String url_active = url_client + "/verify-email?token=" + token;
 
         String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
                 + "<h2 style='color: #007bff;'>Activate Your Account</h2>"
@@ -450,7 +450,7 @@ public class AccountServiceImpl implements AccountService{
 
         var token = authenticationService.generateToken(account);
 
-        String url_active = urlApi + "common/auth/active?token=" + token;
+        String url_active = url_client + "/verify-email?token=" + token;
 
         String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
                 + "<h2 style='color: #007bff;'>Activate Your Account</h2>"

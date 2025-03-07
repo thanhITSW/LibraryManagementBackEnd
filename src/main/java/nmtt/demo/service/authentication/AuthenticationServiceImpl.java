@@ -369,12 +369,11 @@ public class AuthenticationServiceImpl implements AuthenticationService {
      * @throws AppException   If the user account does not exist.
      */
     @Override
-    public void activeAccount(String token) throws ParseException, JOSEException {
+    public boolean activeAccount(String token) throws ParseException, JOSEException {
 
         var signedJWT = verifyToken(token, true);
 
         String accountId = signedJWT.getJWTClaimsSet().getIssuer();
-        System.out.println(accountId);
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
@@ -382,5 +381,6 @@ public class AuthenticationServiceImpl implements AuthenticationService {
         account.setActive(true);
 
         accountRepository.save(account);
+        return true;
     }
 }

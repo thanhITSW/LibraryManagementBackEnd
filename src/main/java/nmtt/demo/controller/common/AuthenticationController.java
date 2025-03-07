@@ -5,6 +5,7 @@ import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.*;
 import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
+import nmtt.demo.dto.response.Email.VerificationResponse;
 import nmtt.demo.service.authentication.AuthenticationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,13 +52,12 @@ public class AuthenticationController {
     }
 
     @GetMapping("/active")
-    public ResponseEntity<ApiResponse<String>> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
-        authenticationService.activeAccount(token);
+    public ResponseEntity<?> activeAccount(@RequestParam String token) throws ParseException, JOSEException {
+        boolean isValid = authenticationService.activeAccount(token);
 
-        ApiResponse<String> response = ApiResponse.<String>builder()
-                .message("Active account successfully")
-                .build();
-
-        return ResponseEntity.ok(response);
+        if (isValid) {
+            return ResponseEntity.ok(new VerificationResponse(true, "Email đã được xác nhận thành công"));
+        }
+        return ResponseEntity.status(401).body(new VerificationResponse(false, "Token không hợp lệ hoặc đã hết hạn"));
     }
 }
