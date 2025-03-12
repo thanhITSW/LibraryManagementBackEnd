@@ -13,4 +13,5 @@ import lombok.experimental.FieldDefaults;
 public class AuthenticationResponse {
     String access_token;
     String refresh_token;
+    boolean firstLogin;
 }

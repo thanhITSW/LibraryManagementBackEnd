@@ -80,10 +80,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
             throw new AppException(ErrorCode.ACCOUNT_NOT_ACTIVE);
         }
 
-        return AuthenticationResponse.builder()
-                .access_token(generateToken(account))
-                .refresh_token(generateRefreshToken(account))
-                .build();
+        return !account.isFirstLogin() ?
+                AuthenticationResponse.builder()
+                        .access_token(generateToken(account))
+                        .refresh_token(generateRefreshToken(account))
+                        .build() :
+                AuthenticationResponse.builder()
+                        .firstLogin(account.isFirstLogin())
+                        .access_token(generateToken(account))
+                        .refresh_token(generateRefreshToken(account))
+                        .build();
     }
 
     /**
@@ -377,6 +383,16 @@ public class AuthenticationServiceImpl implements AuthenticationService {
 
         Account account = accountRepository.findById(accountId)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        String jit = signedJWT.getJWTClaimsSet().getJWTID();
+        Date expiryTime = signedJWT.getJWTClaimsSet().getExpirationTime();
+        InvalidatedToken invalidatedToken =
+                InvalidatedToken.builder()
+                        .id(jit)
+                        .expiryTime(expiryTime)
+                        .build();
+
+        invalidatedTokenRepository.save(invalidatedToken);
 
         account.setActive(true);
 

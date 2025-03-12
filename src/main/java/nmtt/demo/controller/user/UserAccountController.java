@@ -82,4 +82,16 @@ public class UserAccountController {
 
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/change-password-first-login")
+    public ResponseEntity<ApiResponse<String>> changePasswordFirstLogin (
+            @RequestBody FirstLoginRequest request){
+        accountService.changePasswordFirstLogin(request);
+
+        ApiResponse<String> response = ApiResponse.<String>builder()
+                .message("Change password successfully")
+                .build();
+
+        return ResponseEntity.ok(response);
+    }
 }

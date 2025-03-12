@@ -247,6 +247,7 @@ public class AccountServiceImpl implements AccountService{
 
         String newPassword = String.format("%06d", (int) (Math.random() * 1000000));
         account.setPassword(passwordEncoder.encode(newPassword));
+        account.setFirstLogin(true);
 
         accountRepository.save(account);
 
@@ -464,6 +465,20 @@ public class AccountServiceImpl implements AccountService{
 
         emailSenderService.sendHtmlEmail(account.getEmail(), "Verify account"
                 , htmlContent);
+    }
+
+    @Override
+    public void changePasswordFirstLogin(FirstLoginRequest request){
+        String issuer = SecurityUtils.getIssuer();
+        assert issuer != null;
+
+        Account account = accountRepository
+                .findById(issuer)
+                .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
+
+        account.setPassword(passwordEncoder.encode(request.getNewPassword()));
+        account.setFirstLogin(false);
+        accountRepository.save(account);
     }
 
     private Map<String, Object> toMap(Account account) {

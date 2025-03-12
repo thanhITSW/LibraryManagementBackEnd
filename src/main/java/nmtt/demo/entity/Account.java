@@ -43,6 +43,9 @@ public class Account {
     @Column(name = "active")
     boolean active;
 
+    @Column(name = "first_login")
+    boolean firstLogin = true;
+
     @ManyToMany
     Set<Role> roles;
 

@@ -24,10 +24,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -183,12 +181,20 @@ public class BookServiceImpl implements BookService{
             String[] headerRow = allRows.get(0);
             List<String> expectedHeaders = List.of("title", "author", "category", "totalCopies", "availableCopies");
             List<String> actualHeaders = Arrays.stream(headerRow)
-                    .map(h -> h.replace("\uFEFF", "").trim()) // Xóa BOM và khoảng trắng
+                    .map(h -> h.replace("\uFEFF", "").trim())
                     .toList();
 
             if (!actualHeaders.equals(expectedHeaders)) {
                 throw new AppException(ErrorCode.INVALID_CSV_DATA);
             }
+
+            List<Book> existingBooks = bookRepository.findAll();
+            Map<String, Book> existingBooksMap = existingBooks.stream()
+                    .collect(Collectors.toMap(
+                            book -> (book.getTitle() + "|" + book.getAuthor()).toLowerCase(),
+                            book -> book,
+                            (b1, b2) -> b1
+                    ));
 
             for (int i = 1; i < allRows.size(); i++) {
                 String[] data = allRows.get(i);
@@ -198,9 +204,21 @@ public class BookServiceImpl implements BookService{
                 }
 
                 try {
+                    String title = data[0].trim();
+                    String author = data[1].trim();
+                    String key = (title + "|" + author).toLowerCase();
+
+                    if (existingBooksMap.containsKey(key)) {
+                        Book existingBook = existingBooksMap.get(key);
+                        existingBook.setTotalCopies(existingBook.getTotalCopies() + Integer.parseInt(data[3].trim()));
+                        existingBook.setAvailableCopies(existingBook.getAvailableCopies() + Integer.parseInt(data[4].trim()));
+                        books.add(existingBook);
+                        continue;
+                    }
+
                     Book book = new Book();
-                    book.setTitle(data[0].trim());
-                    book.setAuthor(data[1].trim());
+                    book.setTitle(title);
+                    book.setAuthor(author);
                     book.setCategory(data[2].trim());
                     book.setTotalCopies(Integer.parseInt(data[3].trim()));
                     book.setAvailableCopies(Integer.parseInt(data[4].trim()));
@@ -210,7 +228,9 @@ public class BookServiceImpl implements BookService{
                 }
             }
 
-            bookRepository.saveAll(books);
+            if (!books.isEmpty()) {
+                bookRepository.saveAll(books);
+            }
         } catch (IOException | CsvException e) {
             throw new AppException(ErrorCode.CSV_IMPORT_FAILED);
         }
