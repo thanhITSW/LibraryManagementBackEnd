@@ -1,6 +1,7 @@
 package nmtt.demo.controller.common;
 
 import com.nimbusds.jose.JOSEException;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.*;
 import nmtt.demo.dto.response.Account.AuthenticationResponse;
@@ -21,7 +22,7 @@ public class AuthenticationController {
     private final AuthenticationService authenticationService;
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
         try {
             AuthenticationResponse authResponse = authenticationService.authenticate(request);
             return ResponseEntity.ok(authResponse);

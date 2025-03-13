@@ -1,5 +1,6 @@
 package nmtt.demo.controller.user;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.*;
@@ -24,7 +25,7 @@ public class UserAccountController {
     }
 
     @PostMapping("/request-change-mail")
-    public ResponseEntity<ApiResponse<String>> requestChangeMail(@RequestBody EmailRequest request) {
+    public ResponseEntity<ApiResponse<String>> requestChangeMail(@RequestBody @Valid EmailRequest request) {
         accountService.requestChangeMail(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
@@ -59,7 +60,7 @@ public class UserAccountController {
 
     @PostMapping("/request-change-phone")
     public ResponseEntity<ApiResponse<String>> requestChangePhone(
-            @RequestBody ChangePhoneRequest request){
+            @RequestBody @Valid ChangePhoneRequest request){
 
         String otp = accountService.requestChangePhone(request);
 
@@ -85,7 +86,7 @@ public class UserAccountController {
 
     @PostMapping("/change-password-first-login")
     public ResponseEntity<ApiResponse<String>> changePasswordFirstLogin (
-            @RequestBody FirstLoginRequest request){
+            @RequestBody @Valid FirstLoginRequest request){
         accountService.changePasswordFirstLogin(request);
 
         ApiResponse<String> response = ApiResponse.<String>builder()
