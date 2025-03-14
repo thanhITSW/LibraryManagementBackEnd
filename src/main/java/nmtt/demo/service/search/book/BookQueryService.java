@@ -17,12 +17,25 @@ import tech.jhipster.service.QueryService;
 public class BookQueryService extends QueryService<Book> {
     private final BookRepository bookRepository;
 
+    /**
+     * Finds books by given criteria with pagination support.
+     *
+     * @param criteria The criteria to filter books.
+     * @param pageable Pagination information.
+     * @return A page of books matching the criteria.
+     */
     @Transactional(readOnly = true)
     public Page<Book> findByCriteria(BookCriteria criteria, Pageable pageable) {
         Specification<Book> specification = createSpecification(criteria);
         return bookRepository.findAll(specification, pageable);
     }
 
+    /**
+     * Creates a specification for filtering books based on given criteria.
+     *
+     * @param criteria The criteria to filter books.
+     * @return A specification to apply the filters.
+     */
     private Specification<Book> createSpecification(BookCriteria criteria) {
         Specification<Book> spec = Specification.where(null);
 

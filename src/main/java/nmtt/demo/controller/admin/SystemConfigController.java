@@ -16,6 +16,12 @@ import org.springframework.web.bind.annotation.*;
 public class SystemConfigController {
     private final SystemConfigService systemConfigService;
 
+    /**
+     * Updates the system's maintenance mode.
+     *
+     * @param request The request containing the new maintenance mode status.
+     * @return The updated system configuration with HTTP status 200 (OK), or 500 (Internal Server Error) if an error occurs.
+     */
     @PostMapping("/maintenance")
     public ResponseEntity<SystemConfig> updateMaintenanceMode(@RequestBody MaintenanceModeRequest request) {
 

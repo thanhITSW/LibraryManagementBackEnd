@@ -88,6 +88,14 @@ public class AccountServiceImpl implements AccountService{
         return accountMapper.toAccountResponse(account);
     }
 
+    /**
+     * Admin creates a new user account.
+     *
+     * @param request The account creation request containing user details.
+     * @return The created account as an AccountResponse.
+     * @throws AppException If the email is already registered.
+     */
+
     @Override
     public AccountResponse adminCreateAccount(AdminCreationAccountRequest request){
         if(accountRepository.existsByEmail(request.getEmail())){
@@ -372,31 +380,40 @@ public class AccountServiceImpl implements AccountService{
         accountRepository.save(account);
     }
 
+    /**
+     * Initiates a request to change the user's phone number.
+     * This method generates an OTP, saves it with the new phone number,
+     * and sends a verification email to the user's current email address.
+     *
+     * @param request The ChangePhoneRequest containing the new phone number.
+     * @return The generated OTP as a String.
+     * @throws AppException If the user does not exist (USER_NOT_EXISTED) or if the new phone number is the same as the current one (PHONE_INVALID).
+     */
     @Override
     public String requestChangePhone(ChangePhoneRequest request) {
         String issuer = SecurityUtils.getIssuer();
         assert issuer != null;
-
+    
         Account account = accountRepository
                 .findById(issuer)
                 .orElseThrow(() -> new AppException(ErrorCode.USER_NOT_EXISTED));
-
+    
         if(account.getPhone().equals(request.getPhone())){
             throw new AppException(ErrorCode.PHONE_INVALID);
         }
         String otp = String.format("%06d", (int) (Math.random() * 1000000));
-
+    
         LocalDateTime createdAt = LocalDateTime.now();
-
+    
         OtpPhone otpPhone = OtpPhone.builder()
                 .accountId(issuer)
                 .phone(request.getPhone())
                 .otp(otp)
                 .createdAt(createdAt)
                 .build();
-
+    
         otpPhoneRepository.save(otpPhone);
-
+    
         String subject = "Verify New Phone";
         String htmlContent = "<div style='font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #ddd; border-radius: 10px; text-align: center;'>"
                 + "<h2 style='color: #007bff;'>Verify Your Phone Change Request</h2>"
@@ -410,7 +427,16 @@ public class AccountServiceImpl implements AccountService{
         return otp;
     }
 
+    /**
+     * Verifies the phone change request using the provided OTP and updates the user's phone number.
+     * This method checks the validity of the OTP, updates the account with the new phone number,
+     * logs the change, and removes the used OTP from the repository.
+     *
+     * @param request The VerifyCodeRequest containing the OTP sent to the user.
+     * @throws AppException If the OTP is invalid (INVALID_OTP) or if the user does not exist (USER_NOT_EXISTED).
+     */
     @Override
+    @Transactional
     public void verifyChangePhone(VerifyCodeRequest request) {
         String issuer = SecurityUtils.getIssuer();
         assert issuer != null;
@@ -440,6 +466,16 @@ public class AccountServiceImpl implements AccountService{
         otpPhoneRepository.delete(otpPhone);
     }
 
+    /**
+     * Resends the account activation link to the user's email.
+     * <p>
+     * This method checks if the account associated with the provided email is inactive,
+     * generates a new activation token, and sends an activation email to the user.
+     * </p>
+     *
+     * @param request The EmailRequest object containing the user's email address.
+     * @throws AppException If the user does not exist (USER_NOT_EXISTED) or if the account is already active (USER_EXISTED).
+     */
     @Override
     public void resendLinkActiveAccount(EmailRequest request){
         Account account = accountRepository.findAccountByEmail(request.getEmail())
@@ -467,6 +503,16 @@ public class AccountServiceImpl implements AccountService{
                 , htmlContent);
     }
 
+    /**
+     * Changes the password for a user during their first login.
+     * <p>
+     * This method updates the user's password with the new password provided in the request
+     * and marks the account as no longer being in the first login state.
+     * </p>
+     *
+     * @param request The FirstLoginRequest object containing the new password.
+     * @throws AppException If the user does not exist (USER_NOT_EXISTED).
+     */
     @Override
     public void changePasswordFirstLogin(FirstLoginRequest request){
         String issuer = SecurityUtils.getIssuer();
@@ -481,6 +527,20 @@ public class AccountServiceImpl implements AccountService{
         accountRepository.save(account);
     }
 
+    /**
+     * Converts an Account object into a Map containing the account's details.
+     *
+     * @param account The Account object to be converted.
+     * @return A Map containing the account's details.
+     * The Map contains the following keys and their corresponding values:
+     * - "id": The account's unique identifier.
+     * - "email": The account's email address.
+     * - "firstName": The account's first name.
+     * - "lastName": The account's last name.
+     * - "dob": The account's date of birth.
+     * - "phone": The account's phone number.
+     * - "active": A boolean indicating whether the account is active.
+     */
     private Map<String, Object> toMap(Account account) {
         Map<String, Object> data = new HashMap<>();
         data.put("id", account.getId());

@@ -29,6 +29,14 @@ public class UserBorrowingController {
     private final BorrowingService borrowingService;
     private final BookQueryService bookQueryService;
 
+    /**
+     * Handles the borrowing of books for a user.
+     *
+     * @param request The request containing the book details to be borrowed.
+     * @return A ResponseEntity containing an ApiResponse with a success message if the book is borrowed successfully,
+     *         or an error message if an exception occurs.
+     * @throws IllegalArgumentException If the book is not available or the user has reached the maximum borrowing limit.
+     */
     @PostMapping("/borrow")
     public ResponseEntity<ApiResponse<String>> borrowBook(@RequestBody BookRequest request) {
         try {
@@ -49,6 +57,14 @@ public class UserBorrowingController {
         }
     }
 
+    /**
+     * Handles the borrowing of books for a user.
+     *
+     * @param request The request containing the book details to be borrowed.
+     * @return A ResponseEntity containing an ApiResponse with a success message if the book is borrowed successfully,
+     *         or an error message if an exception occurs.
+     * @throws IllegalArgumentException If the book is not available or the user has reached the maximum borrowing limit.
+     */
     @PostMapping("/return")
     public ResponseEntity<ApiResponse<String>> returnBook(@RequestBody BookRequest request) {
         try {
@@ -70,6 +86,12 @@ public class UserBorrowingController {
         }
     }
 
+    /**
+     * Retrieves a list of borrowed books for the current user.
+     *
+     * @return A ResponseEntity containing a list of borrowed books if found,
+     *         or an ApiResponse with a message indicating no borrowed books found if the list is empty.
+     */
     @GetMapping("/borrowed-books")
     public ResponseEntity<?> getBorrowedBooks() {
         List<BorrowBookResponse> borrowedBooks = borrowingService.getBorrowedBooks();
@@ -85,6 +107,14 @@ public class UserBorrowingController {
         return ResponseEntity.ok(borrowedBooks);
     }
 
+    /**
+     * Handles the search functionality for books based on the provided criteria and pagination.
+     *
+     * @param criteria The search criteria for filtering books.
+     * @param pageable The pagination details for retrieving a specific page of results.
+     * @return A ResponseEntity containing a Page of Book entities that match the search criteria.
+     *         If no books are found, an empty Page is returned.
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<Book>> searchBook(@ParameterObject BookCriteria criteria
             ,@ParameterObject Pageable pageable) {

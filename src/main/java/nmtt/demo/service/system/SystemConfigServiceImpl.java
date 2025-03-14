@@ -88,6 +88,15 @@ public class SystemConfigServiceImpl implements SystemConfigService{
         return updatedConfig;
     }
 
+    /**
+     * Converts a SystemConfig object into a HashMap for logging purposes.
+     *
+     * @param config The SystemConfig object to be converted.
+     * @return A HashMap containing the SystemConfig object's properties.
+     * The returned HashMap contains the following keys and their corresponding values:
+     * - "id": The ID of the SystemConfig object.
+     * - "maintenanceMode": A boolean indicating whether the system is in maintenance mode.
+     */
     private HashMap<String, Object> toMap(SystemConfig config) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", config.getId());

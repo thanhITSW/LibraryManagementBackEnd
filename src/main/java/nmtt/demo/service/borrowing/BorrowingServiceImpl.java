@@ -140,6 +140,14 @@ public class BorrowingServiceImpl implements BorrowingService{
                 .build()).collect(Collectors.toList());
     }
 
+    /**
+     * Converts a Borrowing entity into a HashMap for logging purposes.
+     *
+     * @param borrowing The Borrowing entity to be converted.
+     * @return A HashMap containing the relevant information from the Borrowing entity.
+     *         The keys in the HashMap correspond to the field names in the Borrowing entity,
+     *         and the values correspond to the field values.
+     */
     private HashMap<String, Object> toMap(Borrowing borrowing) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", borrowing.getId());

@@ -14,6 +14,15 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class TokenValidationServiceImpl implements TokenValidationService{
     private final TokenUtils tokenUtils;
+
+    /**
+     * Validates a JWT token and returns the introspection response.
+     *
+     * @param request The introspection request containing the token to be validated.
+     * @return The introspection response indicating whether the token is valid or not.
+     * @throws JOSEException If an error occurs during JWT verification.
+     * @throws ParseException If an error occurs during parsing the token.
+     */
     public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException {
         var token = request.getToken();
         boolean invalid = true;

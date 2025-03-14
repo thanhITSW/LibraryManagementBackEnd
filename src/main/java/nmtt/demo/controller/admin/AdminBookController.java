@@ -32,19 +32,36 @@ public class AdminBookController {
     private final CloudinaryService cloudinaryService;
     private final BookQueryService bookQueryService;
 
+    /**
+     * Retrieves all books.
+     *
+     * @return A list of all books.
+     */
     @GetMapping
     public ResponseEntity<List<BookResponse>> getAllBooks() {
         List<BookResponse> books = bookService.getAllBook();
         return ResponseEntity.ok(books);
     }
 
+    /**
+     * Creates a new book.
+     *
+     * @param request The request containing book creation details.
+     * @return The created book response.
+     */
     @PostMapping
     public ResponseEntity<BookResponse> createBook(@RequestBody @Valid BookCreationRequest request) {
         BookResponse bookResponse = bookService.createBook(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(bookResponse);
     }
 
-
+    /**
+     * Updates a book by its ID.
+     *
+     * @param bookId  The ID of the book to update.
+     * @param request The request containing updated book details.
+     * @return The updated book response.
+     */
     @PutMapping("/{bookId}")
     public ResponseEntity<BookResponse> updateBookById(
             @PathVariable("bookId") String bookId,
@@ -54,6 +71,12 @@ public class AdminBookController {
         return ResponseEntity.ok(updatedBook);
     }
 
+    /**
+     * Deletes a book by its ID.
+     *
+     * @param bookId The ID of the book to delete.
+     * @return Response indicating the book has been deleted successfully.
+     */
     @DeleteMapping("/{bookId}")
     public ResponseEntity<ApiResponse<String>> deleteBookById(@PathVariable("bookId") String bookId) {
         bookService.deleteBookById(bookId);
@@ -65,6 +88,13 @@ public class AdminBookController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Searches for books based on given criteria with pagination support.
+     *
+     * @param criteria The criteria to filter books.
+     * @param pageable Pagination information.
+     * @return A page of books matching the criteria.
+     */
     @GetMapping("/search")
     public ResponseEntity<Page<Book>> searchBook(BookCriteria criteria
             , Pageable pageable) {
@@ -72,6 +102,12 @@ public class AdminBookController {
         return ResponseEntity.ok(bookQueryService.findByCriteria(criteria, pageable));
     }
 
+    /**
+     * Imports book data from a CSV file.
+     *
+     * @param file The CSV file containing book data.
+     * @return Response indicating the data was added successfully.
+     */
     @PostMapping("/import-csv")
     public ResponseEntity<ApiResponse<String>> importDataByCsv(@RequestParam("file") MultipartFile file) {
         bookService.importBooksFromCsv(file);
@@ -83,6 +119,13 @@ public class AdminBookController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Uploads an image for a specific book.
+     *
+     * @param bookId The ID of the book to upload the image for.
+     * @param file   The image file to upload.
+     * @return The updated book response with the uploaded image or an error response.
+     */
     @PostMapping("/{bookId}/upload")
     public ResponseEntity<?> uploadBookImage(@PathVariable String bookId, @RequestParam("file") MultipartFile file) {
         try {
@@ -121,6 +164,12 @@ public class AdminBookController {
         }
     }
 
+    /**
+     * Previews the image of a specific book.
+     *
+     * @param bookId The ID of the book to preview the image for.
+     * @return The image URL if found, or an error response if not found.
+     */
     @GetMapping("/{bookId}/preview")
     public ResponseEntity<?> previewBookImage(@PathVariable String bookId) {
         String imageUrl = bookService.getBookImageUrl(bookId);
@@ -133,6 +182,12 @@ public class AdminBookController {
         return ResponseEntity.ok(Map.of("imageUrl", imageUrl));
     }
 
+    /**
+     * Deletes the image of a specific book.
+     *
+     * @param bookId The ID of the book whose image is to be deleted.
+     * @return A response indicating success or failure of the deletion.
+     */
     @DeleteMapping("/{bookId}/delete-image")
     public ResponseEntity<?> deleteBookImage(@PathVariable String bookId) {
         try {

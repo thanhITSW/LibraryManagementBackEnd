@@ -19,6 +19,14 @@ import java.io.IOException;
 public class FileUploadController {
     private final CloudinaryService cloudinaryService;
 
+    /**
+     * Uploads an image to a specified folder in Cloudinary.
+     *
+     * @param file       The image file to upload.
+     * @param folderName The name of the folder where the image will be stored.
+     * @return The result of the upload containing details like the secure URL.
+     * @throws IOException If an error occurs during file upload.
+     */
     @PostMapping("/upload/image")
     public ResponseEntity<?> uploadImage(@RequestParam("file") MultipartFile file,
                                          @RequestParam("folder") String folderName) throws IOException {

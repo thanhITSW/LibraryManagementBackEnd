@@ -74,6 +74,7 @@ public class SecurityConfig {
 
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+//        jwtAuthenticationConverter.setPrincipalClaimName("sub");
         return jwtAuthenticationConverter;
     }
 

@@ -19,6 +19,10 @@ public class CustomUserDetailsService implements UserDetailsService {
         this.accountRepository = accountRepository;
     }
 
+    /**
+     * Custom implementation of Spring Security's UserDetailsService interface.
+     * This service is responsible for loading user-specific data when a user logs in.
+     */
     @Override
     public UserDetails loadUserByUsername(String email) throws AppException {
         Account account = accountRepository

@@ -320,6 +320,13 @@ public class BookServiceImpl implements BookService{
         bookRepository.save(book);
     }
 
+    /**
+     * Converts a Book entity into a HashMap containing its properties.
+     *
+     * @param book The Book entity to be converted.
+     * @return A HashMap containing the properties of the Book entity.
+     *         The keys of the HashMap are the property names, and the values are the corresponding property values.
+     */
     private HashMap<String, Object> toMap(Book book) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("id", book.getId());

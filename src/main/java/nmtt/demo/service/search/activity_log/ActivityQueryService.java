@@ -19,6 +19,14 @@ import java.util.List;
 public class ActivityQueryService {
     private final MongoTemplate mongoTemplate;
 
+    /**
+     * This function retrieves a paginated list of ActivityLog entities based on the provided criteria and pageable settings.
+     * It uses MongoDB's query capabilities to filter and sort the results.
+     *
+     * @param criteria The ActivityLogCriteria object containing the filtering criteria.
+     * @param pageable The Pageable object specifying the pagination settings (page number, page size, sorting).
+     * @return A Page object containing the list of ActivityLog entities that match the criteria and are paginated.
+     */
     public Page<ActivityLog> findByCriteria(ActivityLogCriteria criteria, Pageable pageable) {
         Query query = createQuery(criteria);
         long total = mongoTemplate.count(query, ActivityLog.class);
@@ -29,6 +37,13 @@ public class ActivityQueryService {
         return new PageImpl<>(results, pageable, total);
     }
 
+    /**
+     * This function constructs a MongoDB query based on the provided ActivityLogCriteria.
+     * It iterates through the criteria properties and adds corresponding criteria to the query.
+     *
+     * @param criteria The ActivityLogCriteria object containing the filtering criteria.
+     * @return A Query object representing the constructed MongoDB query.
+     */
     private Query createQuery(ActivityLogCriteria criteria) {
         Query query = new Query();
 
@@ -54,6 +69,15 @@ public class ActivityQueryService {
         return query;
     }
 
+    /**
+     * This function constructs a MongoDB criteria for string-based filtering.
+     * It handles different types of string filters (equals, contains, does not contain, in, not in)
+     * and applies them to the specified field.
+     *
+     * @param filter The StringFilter object containing the filtering criteria.
+     * @param field The name of the field to apply the criteria to.
+     * @return A Criteria object representing the constructed MongoDB criteria.
+     */
     private Criteria buildStringCriteria(StringFilter filter, String field) {
         Criteria criteria = Criteria.where(field);
         if (filter.getEquals() != null) {
@@ -70,6 +94,15 @@ public class ActivityQueryService {
         return criteria;
     }
 
+    /**
+     * This function constructs a MongoDB criteria for range-based filtering based on the provided InstantFilter.
+     * It handles different types of range filters (greater than, greater than or equal, less than, less than or equal)
+     * and applies them to the specified field.
+     *
+     * @param filter The InstantFilter object containing the filtering criteria.
+     * @param field The name of the field to apply the criteria to.
+     * @return A Criteria object representing the constructed MongoDB criteria.
+     */
     private Criteria buildRangeCriteria(InstantFilter filter, String field) {
         Criteria criteria = Criteria.where(field);
         if (filter.getGreaterThan() != null) {

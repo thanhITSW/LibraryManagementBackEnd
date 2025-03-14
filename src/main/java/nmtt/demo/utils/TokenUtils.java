@@ -38,6 +38,18 @@ public class TokenUtils {
     private final InvalidatedTokenRepository invalidatedTokenRepository;
 
 
+    /**
+     * Verifies the given JWT token based on the provided key and checks its validity.
+     *
+     * @param token The JWT token to be verified.
+     * @param isRefresh A flag indicating whether the token is a refresh token.
+     *                  If true, the token's expiration time is calculated based on the refreshable duration.
+     *                  If false, the token's expiration time is used as is.
+     * @return The verified SignedJWT object if the token is valid.
+     * @throws JOSEException If there is an error parsing or verifying the token.
+     * @throws ParseException If there is an error parsing the token.
+     * @throws AppException If the token is not valid or has been invalidated.
+     */
     public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException {
         JWSVerifier verifier = new MACVerifier(SIGNER_KEY.getBytes());
 

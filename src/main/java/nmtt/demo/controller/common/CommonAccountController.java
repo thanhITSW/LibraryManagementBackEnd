@@ -21,12 +21,25 @@ public class CommonAccountController {
     private final AccountService accountService;
 
 
+    /**
+     * Creates a new account using the provided account creation request.
+     *
+     * @param request The account creation request containing the necessary information to create a new account.
+     * @return A ResponseEntity containing the created account's information with a HTTP status code of 201 (Created).
+     */
     @PostMapping
     public ResponseEntity<AccountResponse> createAccount(@RequestBody @Valid AccountCreationRequest request) {
         AccountResponse accountResponse = accountService.createAccount(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(accountResponse);
     }
 
+    /**
+     * Resets the password of the account associated with the provided email.
+     *
+     * @param request The email request containing the email of the account to reset the password.
+     * @return A ResponseEntity containing a success message with a HTTP status code of 200 (OK).
+     *         The success message indicates that a new password has been sent to the provided email.
+     */
     @PostMapping("/reset-pass")
     public ResponseEntity<ApiResponse<String>> resetPass(@RequestBody EmailRequest request){
         accountService.resetPass(request);
@@ -38,6 +51,13 @@ public class CommonAccountController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Resends the activation link to the account associated with the provided email.
+     *
+     * @param request The email request containing the email of the account to resend the activation link.
+     * @return A ResponseEntity containing a success message with a HTTP status code of 200 (OK).
+     *         The success message indicates that the activation link has been sent to the provided email.
+     */
     @PostMapping("/resend-link-active-account")
     public ResponseEntity<ApiResponse<String>> resendLinkActiveAccount(@RequestBody EmailRequest request){
         accountService.resendLinkActiveAccount(request);
@@ -49,6 +69,12 @@ public class CommonAccountController {
         return ResponseEntity.ok(response);
     }
 
+    /**
+     * Retrieves the information of the currently authenticated account.
+     *
+     * @return A ResponseEntity containing the account information with a HTTP status code of 200 (OK).
+     *         The account information is encapsulated in an AccountResponse object.
+     */
     @GetMapping("/my-info")
     public ResponseEntity<AccountResponse> getMyInfo() {
         AccountResponse accountResponse = accountService.getMyInfo();

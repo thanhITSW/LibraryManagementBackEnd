@@ -17,11 +17,26 @@ import tech.jhipster.service.QueryService;
 public class AccountQueryService extends QueryService<Account>{
     private final AccountRepository accountRepository;
 
+    /**
+     * This function retrieves a paginated list of accounts based on the provided criteria.
+     *
+     * @param criteria The search criteria for filtering accounts.
+     * @param pageable The pagination information.
+     *
+     * @return A page of accounts that match the given criteria.
+     */
     public Page<Account> findByCriteria(AccountCriteria criteria, Pageable pageable) {
         Specification<Account> specification = createSpecification(criteria);
         return accountRepository.findAll(specification, pageable);
     }
 
+    /**
+     * This function creates a specification for filtering accounts based on the provided criteria.
+     *
+     * @param criteria The search criteria for filtering accounts.
+     *
+     * @return A specification that can be used to query accounts based on the given criteria.
+     */
     private Specification<Account> createSpecification(AccountCriteria criteria) {
         Specification<Account> spec = Specification.where(null);
 
