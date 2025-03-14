@@ -16,11 +16,5 @@ public interface AuthenticationService {
     public AuthenticationResponse authenticate(AuthenticationRequest request);
     public void logout(LogoutRequest request) throws ParseException, JOSEException;
     public AuthenticationResponse refreshToken(RefreshRequest request) throws ParseException, JOSEException;
-    public IntrospectResponse introspect(IntrospectRequest request) throws JOSEException, ParseException;
     public boolean activeAccount(String accountId) throws ParseException, JOSEException;
-
-    public SignedJWT verifyToken(String token, boolean isRefresh) throws JOSEException, ParseException;
-    public String generateToken(Account account);
-    public String generateRefreshToken(Account account);
-    public String buildScope(Account account);
 }

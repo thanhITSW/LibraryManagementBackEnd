@@ -17,9 +17,9 @@ import nmtt.demo.repository.EmailVerificationRepository;
 import nmtt.demo.repository.OtpPhoneRepository;
 import nmtt.demo.repository.RoleRepository;
 import nmtt.demo.service.activity_log.ActivityLogService;
-import nmtt.demo.service.authentication.AuthenticationService;
 import nmtt.demo.service.email.EmailSenderService;
 import nmtt.demo.utils.SecurityUtils;
+import nmtt.demo.utils.TokenUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,8 +40,8 @@ public class AccountServiceImpl implements AccountService{
     private final EmailSenderService emailSenderService;
     private final EmailVerificationRepository emailVerificationRepository;
     private final OtpPhoneRepository otpPhoneRepository;
-    private final AuthenticationService authenticationService;
     private final ActivityLogService logService;
+    private final TokenUtils tokenUtils;
 
     @Value("${URL_CLIENT}")
     private String url_client;
@@ -68,7 +68,7 @@ public class AccountServiceImpl implements AccountService{
         roleRepository.findById(PredefinedRole.USER_ROLE).ifPresent(roles::add);
         account.setRoles(roles);
         account = accountRepository.save(account);
-        var token = authenticationService.generateToken(account);
+        var token = tokenUtils.generateToken(account);
 
         String url_active = url_client + "/verify-email?token=" + token;
 
@@ -449,7 +449,7 @@ public class AccountServiceImpl implements AccountService{
             throw new AppException(ErrorCode.USER_EXISTED);
         }
 
-        var token = authenticationService.generateToken(account);
+        var token = tokenUtils.generateToken(account);
 
         String url_active = url_client + "/verify-email?token=" + token;
 

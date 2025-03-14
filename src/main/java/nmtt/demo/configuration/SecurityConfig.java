@@ -2,9 +2,12 @@ package nmtt.demo.configuration;
 
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.components.CustomJwtDecoder;
+import nmtt.demo.service.account.CustomUserDetailsService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -17,7 +20,6 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.web.filter.CorsFilter;
 
 import java.util.List;
 
@@ -25,7 +27,7 @@ import java.util.List;
 @EnableWebSecurity
 @EnableMethodSecurity
 @RequiredArgsConstructor
-public class SercurityConfig {
+public class SecurityConfig {
 
     @Value("${security.public.endpoints.common}")
     private String[] PUBLIC_ENDPOINTS;
@@ -37,6 +39,7 @@ public class SercurityConfig {
     private String[] AUTH_ENDPOINTS_USER;
 
     private final CustomJwtDecoder customJwtDecoder;
+    private final CustomUserDetailsService customUserDetailsService;
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity httpSecurity) throws Exception {
@@ -77,6 +80,13 @@ public class SercurityConfig {
     @Bean
     PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder(10);
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(HttpSecurity http) throws Exception {
+        AuthenticationManagerBuilder authBuilder = http.getSharedObject(AuthenticationManagerBuilder.class);
+        authBuilder.userDetailsService(customUserDetailsService).passwordEncoder(passwordEncoder());
+        return authBuilder.build();
     }
 
     @Bean

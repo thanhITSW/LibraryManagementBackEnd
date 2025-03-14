@@ -7,6 +7,7 @@ import javax.crypto.spec.SecretKeySpec;
 import lombok.RequiredArgsConstructor;
 import nmtt.demo.dto.request.Account.IntrospectRequest;
 import nmtt.demo.service.authentication.AuthenticationService;
+import nmtt.demo.service.authentication.TokenValidationService;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.MacAlgorithm;
 import org.springframework.security.oauth2.jwt.*;
@@ -19,7 +20,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     @Value("${SIGNER_KEY}")
     private String signerKey;
 
-    private final AuthenticationService authenticationService;
+    private final TokenValidationService tokenValidationService;
 
     private NimbusJwtDecoder nimbusJwtDecoder = null;
 
@@ -27,7 +28,7 @@ public class CustomJwtDecoder implements JwtDecoder {
     public Jwt decode(String token) throws JwtException {
 
         try {
-            var response = authenticationService.introspect(
+            var response = tokenValidationService.introspect(
                     IntrospectRequest.builder().token(token).build());
 
             if (!response.isValid()) throw new BadJwtException("Token invalid");

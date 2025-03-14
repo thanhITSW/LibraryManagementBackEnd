@@ -16,17 +16,6 @@ import org.springframework.web.bind.annotation.*;
 public class SystemConfigController {
     private final SystemConfigService systemConfigService;
 
-    @GetMapping
-    public ResponseEntity<SystemConfig> getCurrentConfig() {
-        SystemConfig config = systemConfigService.getConfig();
-
-        if (config == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
-        }
-
-        return ResponseEntity.ok(config);
-    }
-
     @PostMapping("/maintenance")
     public ResponseEntity<SystemConfig> updateMaintenanceMode(@RequestBody MaintenanceModeRequest request) {
 

@@ -16,6 +16,7 @@ public class WebConfig implements WebMvcConfigurer {
         registry.addInterceptor(maintenanceInterceptor)
                 .addPathPatterns("/**") // Apply to all APIs
                 .excludePathPatterns("/api/admin/system-config/**")
+                .excludePathPatterns("/api/common/system-config")
                 .excludePathPatterns("/api/common/auth/login")
                 .excludePathPatterns("/api/common/auth/logout");// Allow access to config APIs
     }

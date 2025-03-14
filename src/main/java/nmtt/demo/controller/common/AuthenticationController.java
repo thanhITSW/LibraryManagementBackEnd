@@ -8,6 +8,7 @@ import nmtt.demo.dto.response.Account.AuthenticationResponse;
 import nmtt.demo.dto.response.Account.IntrospectResponse;
 import nmtt.demo.dto.response.Email.VerificationResponse;
 import nmtt.demo.service.authentication.AuthenticationService;
+import nmtt.demo.service.authentication.TokenValidationService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.AuthenticationException;
@@ -20,6 +21,7 @@ import java.text.ParseException;
 @RequiredArgsConstructor
 public class AuthenticationController {
     private final AuthenticationService authenticationService;
+    private final TokenValidationService tokenValidationService;
 
     @PostMapping("/login")
     public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody @Valid AuthenticationRequest request) {
@@ -47,7 +49,7 @@ public class AuthenticationController {
     @PostMapping("/introspect")
     public ResponseEntity<IntrospectResponse> authenticate(@RequestBody IntrospectRequest request)
             throws ParseException, JOSEException {
-        IntrospectResponse result = authenticationService.introspect(request);
+        IntrospectResponse result = tokenValidationService.introspect(request);
         return ResponseEntity.ok(result);
 
     }
