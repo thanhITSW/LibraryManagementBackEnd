@@ -17,7 +17,7 @@ public class AccountResponse {
     String firstName;
     String lastName;
     LocalDate dob;
+    String phone;
     Set<RoleResponse> roles;
     boolean active;
-
 }

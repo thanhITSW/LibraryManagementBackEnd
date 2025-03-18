@@ -22,7 +22,7 @@ public class Account {
     String id;
 
     @Email
-    @Column(name = "email")
+    @Column(name = "email", unique = true)
     String email;
 
     @Column(name = "password")
@@ -37,8 +37,14 @@ public class Account {
     @Column(name = "dob")
     LocalDate dob;
 
+    @Column(name = "phone", unique = true)
+    String phone;
+
     @Column(name = "active")
     boolean active;
+
+    @Column(name = "first_login")
+    boolean firstLogin = true;
 
     @ManyToMany
     Set<Role> roles;

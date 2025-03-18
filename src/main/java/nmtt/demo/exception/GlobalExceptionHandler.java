@@ -2,16 +2,32 @@ package nmtt.demo.exception;
 
 import nmtt.demo.dto.request.Account.ApiResponse;
 import nmtt.demo.enums.ErrorCode;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
+import org.springframework.validation.FieldError;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiResponse> handleDataIntegrityViolationException(DataIntegrityViolationException exception) {
+        ApiResponse apiResponse = new ApiResponse<>();
+        apiResponse.setCode(ErrorCode.UNCATEGORIZED_EXEPTION.getCode());
+        apiResponse.setMessage("Cannot delete or update the record due to foreign key constraint.");
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(apiResponse);
+    }
 
     @ExceptionHandler(value = Exception.class)
     ResponseEntity<ApiResponse> handlingRuntimeException(RuntimeException exception){
@@ -22,6 +38,7 @@ public class GlobalExceptionHandler {
 
         return ResponseEntity.badRequest().body(apiResponse);
     }
+
 
     @ExceptionHandler(value = AppException.class)
     ResponseEntity<ApiResponse> AppException(AppException exception){
@@ -57,6 +74,39 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<String>> handleValidationException(MethodArgumentNotValidException ex) {
         String errorMessage = ex.getBindingResult().getAllErrors().get(0).getDefaultMessage();
-        return ResponseEntity.badRequest().body(ApiResponse.<String>builder().result(errorMessage).build());
+        return ResponseEntity.badRequest().body(ApiResponse.<String>builder().message(errorMessage).build());
+    }
+
+    @ExceptionHandler(org.springframework.http.converter.HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse> handleHttpMessageNotReadableException(org.springframework.http.converter.HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiResponse.builder()
+                        .code(ErrorCode.INVALID_JSON.getCode())
+                        .message("Invalid JSON format. Please check the request body.")
+                        .build());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiResponse> handleNoResourceFoundException(NoResourceFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.builder()
+                        .code(ErrorCode.NOT_FOUND.getCode())
+                        .message("The requested resource was not found.")
+                        .build());
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiResponse> handleHttpMediaTypeNotSupported(HttpMediaTypeNotSupportedException ex) {
+        String unsupportedType = ex.getContentType() != null ? ex.getContentType().toString() : "unknown";
+        String supportedTypes = ex.getSupportedMediaTypes().toString();
+
+        String errorMessage = String.format("Content-Type '%s' is not supported. Supported types: %s",
+                unsupportedType, supportedTypes);
+
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiResponse.builder()
+                        .code(ErrorCode.UNSUPPORTED_MEDIA_TYPE.getCode())
+                        .message(errorMessage)
+                        .build());
     }
 }

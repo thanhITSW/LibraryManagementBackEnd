@@ -1,0 +1,187 @@
+<?xml version="1.1" encoding="UTF-8" standalone="no"?>
+<databaseChangeLog xmlns="http://www.liquibase.org/xml/ns/dbchangelog" xmlns:ext="http://www.liquibase.org/xml/ns/dbchangelog-ext" xmlns:pro="http://www.liquibase.org/xml/ns/pro" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog-ext http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-ext.xsd http://www.liquibase.org/xml/ns/pro http://www.liquibase.org/xml/ns/pro/liquibase-pro-latest.xsd http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-latest.xsd">
+    <changeSet author="Thanh (generated)" id="1741853069783-1">
+        <createTable tableName="account">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="dob" type="date"/>
+            <column name="email" type="VARCHAR(255)"/>
+            <column name="first_name" type="VARCHAR(255)"/>
+            <column name="last_name" type="VARCHAR(255)"/>
+            <column name="password" type="VARCHAR(255)"/>
+            <column name="active" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="phone" type="VARCHAR(255)"/>
+            <column name="first_login" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-2">
+        <createTable tableName="account_roles">
+            <column name="account_id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="roles_name" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-3">
+        <createTable tableName="book">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="author" type="VARCHAR(255)"/>
+            <column name="available" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="available_copies" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="category" type="VARCHAR(255)"/>
+            <column name="title" type="VARCHAR(255)"/>
+            <column name="total_copies" type="INT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="image_public_id" type="VARCHAR(255)"/>
+            <column name="image_url" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-4">
+        <createTable tableName="borrowing">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="borrow_date" type="date">
+                <constraints nullable="false"/>
+            </column>
+            <column defaultValueComputed="NULL" name="return_date" type="date"/>
+            <column name="returned" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+            <column name="account_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+            <column name="book_id" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-5">
+        <createTable tableName="email_verification">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_id" type="VARCHAR(255)"/>
+            <column name="new_email" type="VARCHAR(255)"/>
+            <column name="verification_code" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-6">
+        <createTable tableName="invalidated_token">
+            <column name="id" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column defaultValueComputed="NULL" name="expiry_time" type="datetime"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-7">
+        <createTable tableName="otp_phone">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="account_id" type="VARCHAR(255)"/>
+            <column defaultValueComputed="NULL" name="created_at" type="datetime"/>
+            <column name="otp" type="VARCHAR(255)"/>
+            <column name="phone" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-8">
+        <createTable tableName="permission">
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-9">
+        <createTable tableName="role">
+            <column name="name" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="description" type="VARCHAR(255)"/>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-10">
+        <createTable tableName="role_permissions">
+            <column name="role_name" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="permissions_name" type="VARCHAR(255)">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="permission_name" type="VARCHAR(255)">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-11">
+        <createTable tableName="system_config">
+            <column autoIncrement="true" name="id" type="BIGINT">
+                <constraints nullable="false" primaryKey="true"/>
+            </column>
+            <column name="maintenance_mode" type="BIT">
+                <constraints nullable="false"/>
+            </column>
+        </createTable>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-12">
+        <createIndex indexName="FK5apxdynankvq5vbor6crl42g7" tableName="role_permissions">
+            <column name="permission_name"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-13">
+        <createIndex indexName="FK5ok6v9x0u59fhsruew6iep4i3" tableName="borrowing">
+            <column name="account_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-14">
+        <createIndex indexName="FKf5aljih4mxtdgalvr7xvngfn1" tableName="role_permissions">
+            <column name="permissions_name"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-15">
+        <createIndex indexName="FKi0yba44vmeofgedvm64b10ogv" tableName="account_roles">
+            <column name="roles_name"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-16">
+        <createIndex indexName="FKpgw9do56tnua1aepwswrbwifh" tableName="borrowing">
+            <column name="book_id"/>
+        </createIndex>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-17">
+        <addForeignKeyConstraint baseColumnNames="permission_name" baseTableName="role_permissions" constraintName="FK5apxdynankvq5vbor6crl42g7" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="name" referencedTableName="permission" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-18">
+        <addForeignKeyConstraint baseColumnNames="account_id" baseTableName="borrowing" constraintName="FK5ok6v9x0u59fhsruew6iep4i3" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="account" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-19">
+        <addForeignKeyConstraint baseColumnNames="role_name" baseTableName="role_permissions" constraintName="FKcppvu8fk24eqqn6q4hws7ajux" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="name" referencedTableName="role" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-20">
+        <addForeignKeyConstraint baseColumnNames="permissions_name" baseTableName="role_permissions" constraintName="FKf5aljih4mxtdgalvr7xvngfn1" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="name" referencedTableName="permission" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-21">
+        <addForeignKeyConstraint baseColumnNames="roles_name" baseTableName="account_roles" constraintName="FKi0yba44vmeofgedvm64b10ogv" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="name" referencedTableName="role" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-22">
+        <addForeignKeyConstraint baseColumnNames="book_id" baseTableName="borrowing" constraintName="FKpgw9do56tnua1aepwswrbwifh" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="book" validate="true"/>
+    </changeSet>
+    <changeSet author="Thanh (generated)" id="1741853069783-23">
+        <addForeignKeyConstraint baseColumnNames="account_id" baseTableName="account_roles" constraintName="FKtp61eta5i06bug3w1qr6286uf" deferrable="false" initiallyDeferred="false" onDelete="RESTRICT" onUpdate="RESTRICT" referencedColumnNames="id" referencedTableName="account" validate="true"/>
+    </changeSet>
+</databaseChangeLog>

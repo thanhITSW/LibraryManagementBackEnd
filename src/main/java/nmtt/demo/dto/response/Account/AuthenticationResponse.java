@@ -11,6 +11,7 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class AuthenticationResponse {
-    String token;
-    boolean authenticated;
+    String access_token;
+    String refresh_token;
+    boolean firstLogin;
 }

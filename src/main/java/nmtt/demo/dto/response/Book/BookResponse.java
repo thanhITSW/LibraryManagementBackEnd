@@ -13,6 +13,7 @@ public class BookResponse {
     String title;
     String author;
     String category;
+    String imageUrl;
     int totalCopies;
     int availableCopies;
     boolean available;

@@ -7,4 +7,6 @@ public interface EmailSenderService {
     public void sendSimpleEmail(String toEmail,
                                 String subject,
                                 String body);
+
+    public void sendHtmlEmail(String toEmail, String subject, String htmlBody);
 }
