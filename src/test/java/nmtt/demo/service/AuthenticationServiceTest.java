@@ -1,26 +1,20 @@
 //package nmtt.demo.service;
 //
 //import com.nimbusds.jose.*;
-//import com.nimbusds.jose.crypto.MACSigner;
-//import com.nimbusds.jose.crypto.MACVerifier;
-//import com.nimbusds.jwt.JWTClaimsSet;
-//import com.nimbusds.jwt.SignedJWT;
 //import nmtt.demo.components.CustomJwtDecoder;
 //import nmtt.demo.dto.request.Account.AuthenticationRequest;
-//import nmtt.demo.dto.request.Account.IntrospectRequest;
 //import nmtt.demo.dto.request.Account.LogoutRequest;
 //import nmtt.demo.dto.request.Account.RefreshRequest;
 //import nmtt.demo.dto.response.Account.AuthenticationResponse;
-//import nmtt.demo.dto.response.Account.IntrospectResponse;
 //import nmtt.demo.entity.Account;
 //import nmtt.demo.entity.InvalidatedToken;
-//import nmtt.demo.entity.Permission;
-//import nmtt.demo.entity.Role;
 //import nmtt.demo.enums.ErrorCode;
 //import nmtt.demo.exception.AppException;
 //import nmtt.demo.repository.AccountRepository;
 //import nmtt.demo.repository.InvalidatedTokenRepository;
 //import nmtt.demo.service.authentication.AuthenticationService;
+//import nmtt.demo.service.authentication.TokenValidationService;
+//import nmtt.demo.utils.TokenUtils;
 //import org.junit.jupiter.api.BeforeEach;
 //import org.junit.jupiter.api.Test;
 //import org.mockito.Mock;
@@ -30,14 +24,10 @@
 //import org.springframework.boot.test.context.SpringBootTest;
 //import org.springframework.boot.test.mock.mockito.MockBean;
 //import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.security.oauth2.jwt.Jwt;
 //import org.springframework.test.context.TestPropertySource;
-//import org.springframework.util.CollectionUtils;
 //
 //import java.text.ParseException;
-//import java.time.Instant;
 //import java.time.LocalDate;
-//import java.time.temporal.ChronoUnit;
 //import java.util.*;
 //
 //import static org.junit.jupiter.api.Assertions.*;
@@ -53,10 +43,11 @@
 //    private InvalidatedTokenRepository invalidatedTokenRepository;
 //
 //    @Autowired
-//    private CustomJwtDecoder customJwtDecoder;
-//
-//    @Autowired
 //    private AuthenticationService authenticationService;
+//
+//
+//    @MockBean
+//    private TokenUtils tokenUtils;
 //
 //    @Autowired
 //    private PasswordEncoder passwordEncoder;
@@ -66,15 +57,6 @@
 //    private Account validAccount;
 //    private RefreshRequest refreshRequest;
 //    private String validToken;
-//
-//    @Value("${SIGNER_KEY}")
-//    private String SIGNER_KEY;
-//
-//    @Value("${refreshable-duration}")
-//    private long REFRESHABLE_DURATION;
-//
-//    @Value("${valid-duration}")
-//    private long VALID_DURATION;
 //
 //    @BeforeEach
 //    public void setUp() throws ParseException, JOSEException {
@@ -94,7 +76,7 @@
 //                .active(true)
 //                .build();
 //
-//        validToken = authenticationService.generateToken(validAccount);
+//        validToken = tokenUtils.generateToken(validAccount);
 //        refreshRequest = RefreshRequest.builder().token(validToken).build();
 //
 //        when(accountRepository.findAccountByEmail(validAccount.getEmail())).thenReturn(Optional.of(validAccount));
@@ -109,8 +91,8 @@
 //        AuthenticationResponse response = authenticationService.authenticate(validRequest);
 //
 //        assertNotNull(response);
-//        assertTrue(response.isAuthenticated());
-//        assertNotNull(response.getToken());
+//        assertNotNull(response.getAccess_token());
+//        assertNotNull(response.getRefresh_token());
 //    }
 //
 //    @Test
@@ -144,18 +126,17 @@
 //
 //        when(accountRepository.findAccountByEmail(validRequest.getEmail())).thenReturn(Optional.of(validAccount));
 //
-//        // Test inactive account response
-//        AuthenticationResponse response = authenticationService.authenticate(validRequest);
+//        AppException exception = assertThrows(AppException.class, () -> {
+//            authenticationService.authenticate(validRequest);
+//        });
 //
-//        assertNotNull(response);
-//        assertFalse(response.isAuthenticated());
-//        assertEquals("Tài khoản của bạn chưa được kích hoạt", response.getToken());
+//        assertEquals(ErrorCode.ACCOUNT_NOT_ACTIVE, exception.getErrorCode());
 //    }
 //
 //    @Test
 //    public void testLogout() throws ParseException, JOSEException {
 //        // Arrange
-//        String token = authenticationService.generateToken(validAccount); // Assume this method generates a valid JWT token.
+//        String token = tokenUtils.generateToken(validAccount); // Assume this method generates a valid JWT token.
 //
 //        // Prepare the mock responses
 //        when(invalidatedTokenRepository.existsById(anyString())).thenReturn(false);
@@ -182,8 +163,8 @@
 //        AuthenticationResponse response = authenticationService
 //                .refreshToken(refreshRequest);
 //
-//        assertTrue(response.isAuthenticated());
-//        assertNotNull(response.getToken());
+//        assertNotNull(response.getAccess_token());
+//        assertNotNull(response.getRefresh_token());
 //    }
 //
 //    @Test
@@ -209,10 +190,10 @@
 //    }
 //
 //    @Test
-//    public void testActiveAccount_withValidAccountId() {
+//    public void testActiveAccount_withValidAccountId() throws ParseException, JOSEException {
 //        when(accountRepository.findById(validAccount.getId())).thenReturn(Optional.of(validAccount));
 //
-//        authenticationService.activeAccount(validAccount.getId());
+//        authenticationService.activeAccount(validToken);
 //
 //        assertTrue(validAccount.isActive(), "Account should be activated");
 //
@@ -226,37 +207,5 @@
 //        assertThrows(AppException.class, () -> authenticationService.activeAccount(validAccount.getId()));
 //
 //        verify(accountRepository, never()).save(any(Account.class));
-//    }
-//
-//    @Test
-//    public void testBuildScope_withRolesAndPermissions() {
-//        // Set up mock data for permissions
-//        Permission permission1 = new Permission("READ", "Read permission");
-//        Permission permission2 = new Permission("WRITE", "Write permission");
-//
-//        // Set up mock data for roles
-//        Role role1 = new Role("ADMIN", "Administrator role", Set.of(permission1, permission2));
-//        Role role2 = new Role("USER", "User role", Set.of(permission1));
-//
-//        // Set up mock account
-//        Account account = new Account();
-//        account.setRoles(Set.of(role1, role2));
-//
-//        // Call buildScope
-//        String scope = authenticationService.buildScope(account);
-//        System.out.println(scope);
-//
-//        // Assert that the scope string is built correctly
-//        assertTrue(scope.contains("ROLE_USERREAD"));
-//    }
-//
-//    @Test
-//    public void testIntrospect_validToken() throws JOSEException, ParseException {
-//        String validToken = authenticationService.generateToken(validAccount); // A utility method to generate a valid token
-//
-//        boolean isValid = authenticationService.introspect(new IntrospectRequest(validToken)).isValid();
-//
-//        // Assert that the token is valid
-//        assertTrue(isValid);
 //    }
 //}

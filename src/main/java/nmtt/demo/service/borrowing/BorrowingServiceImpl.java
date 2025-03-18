@@ -20,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -157,5 +158,24 @@ public class BorrowingServiceImpl implements BorrowingService{
         data.put("returnDate", borrowing.getReturnDate());
         data.put("returned", borrowing.isReturned());
         return data;
+    }
+
+    public Map<String, Object> getBorrowingReport(LocalDate fromDate, LocalDate toDate) {
+        int totalBooks = borrowingRepository.countDistinctBookByBorrowDateBetween(fromDate, toDate);
+        List<Borrowing> borrowings = borrowingRepository.findByBorrowDateBetween(fromDate, toDate);
+        long totalUsers = borrowings.stream()
+                .map(b -> b.getAccount().getId())
+                .distinct()
+                .count();
+
+        Map<String, Long> borrowedBooks = borrowings.stream()
+                .collect(Collectors.groupingBy(b -> b.getBook().getTitle(), Collectors.counting()));
+
+        Map<String, Object> report = new HashMap<>();
+        report.put("totalUsers", totalUsers);
+        report.put("totalBooks", totalBooks);
+        report.put("borrowedBooks", borrowedBooks);
+
+        return report;
     }
 }
