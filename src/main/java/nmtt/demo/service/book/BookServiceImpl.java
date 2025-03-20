@@ -14,6 +14,7 @@ import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
+import nmtt.demo.repository.BorrowingRepository;
 import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.cloudinary.CloudinaryService;
 import org.springframework.data.jpa.domain.Specification;
@@ -32,6 +33,7 @@ import java.util.stream.Collectors;
 @Slf4j
 public class BookServiceImpl implements BookService{
     private final BookRepository bookRepository;
+    private final BorrowingRepository borrowingRepository;
     private final BookMapper bookMapper;
     private final CloudinaryService cloudinaryService;
     private final ActivityLogService logService;
@@ -123,6 +125,10 @@ public class BookServiceImpl implements BookService{
         Book book = bookRepository
                 .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        if (borrowingRepository.existsByBookId(bookId)) {
+            throw new AppException(ErrorCode.NOT_DELETE_BOOK_WITH_ACTIVE);
+        }
 
         HashMap<String, Object> oldData = toMap(book);
 

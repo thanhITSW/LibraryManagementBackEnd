@@ -12,10 +12,7 @@ import nmtt.demo.entity.Role;
 import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.AccountMapper;
-import nmtt.demo.repository.AccountRepository;
-import nmtt.demo.repository.EmailVerificationRepository;
-import nmtt.demo.repository.OtpPhoneRepository;
-import nmtt.demo.repository.RoleRepository;
+import nmtt.demo.repository.*;
 import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.email.EmailSenderService;
 import nmtt.demo.utils.SecurityUtils;
@@ -42,6 +39,7 @@ public class AccountServiceImpl implements AccountService{
     private final OtpPhoneRepository otpPhoneRepository;
     private final ActivityLogService logService;
     private final TokenUtils tokenUtils;
+    private final BorrowingRepository borrowingRepository;
 
     @Value("${URL_CLIENT}")
     private String url_client;
@@ -233,6 +231,10 @@ public class AccountServiceImpl implements AccountService{
         Account account = accountRepository
                 .findById(accountId)
                 .orElseThrow(() -> new RuntimeException("Account not found") );
+
+        if (borrowingRepository.existsByAccountId(accountId)) {
+            throw new AppException(ErrorCode.NOT_DELETE_USER_WITH_ACTIVE);
+        }
 
         Map<String, Object> oldData = toMap(account);
         accountRepository.deleteById(accountId);

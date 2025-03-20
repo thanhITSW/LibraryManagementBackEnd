@@ -1,6 +1,7 @@
 package nmtt.demo.service.authentication;
 
 import com.nimbusds.jose.JOSEException;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import nmtt.demo.dto.request.Account.AuthenticationRequest;

@@ -46,7 +46,7 @@ public class Account {
     @Column(name = "first_login")
     boolean firstLogin = true;
 
-    @ManyToMany
+    @ManyToMany()
     Set<Role> roles;
 
     @OneToMany(mappedBy = "account", cascade = CascadeType.ALL, fetch = FetchType.LAZY)

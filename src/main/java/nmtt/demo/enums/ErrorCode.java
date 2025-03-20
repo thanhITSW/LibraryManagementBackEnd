@@ -37,6 +37,8 @@ public enum ErrorCode {
     PASSWORD_NOT_MATCH(1012, "Password not match", HttpStatus.BAD_REQUEST),
     UNSUPPORTED_MEDIA_TYPE(1013, "UNSUPPORTED_MEDIA_TYPE", HttpStatus.BAD_REQUEST),
     ACCOUNT_NOT_ACTIVE(1014, "Your account has not been activated, please activate your account", HttpStatus.BAD_REQUEST),
+    NOT_DELETE_BOOK_WITH_ACTIVE(1014, "Cannot delete book with active borrowings", HttpStatus.BAD_REQUEST),
+    NOT_DELETE_USER_WITH_ACTIVE(1014, "Cannot delete user with active borrowings", HttpStatus.BAD_REQUEST),
     ;
 
     private int code;

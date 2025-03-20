@@ -11,8 +11,9 @@ public interface BorrowingRepository extends JpaRepository<Borrowing, String> {
     boolean existsByAccountIdAndBookIdAndReturnedFalse(String accountId, String bookId);
     Optional<Borrowing> findByAccountIdAndBookIdAndReturnedFalse(String accountId, String bookId);
     List<Borrowing> findByAccountId(String accountId);
-
-    int countDistinctAccountByBorrowDateBetween(LocalDate fromDate, LocalDate toDate);
     int countDistinctBookByBorrowDateBetween(LocalDate fromDate, LocalDate toDate);
     List<Borrowing> findByBorrowDateBetween(LocalDate fromDate, LocalDate toDate);
+    boolean existsByBookId(String bookId);
+
+    boolean existsByAccountId(String accountId);
 }
