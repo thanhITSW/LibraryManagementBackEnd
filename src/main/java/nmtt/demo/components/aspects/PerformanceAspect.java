@@ -23,12 +23,12 @@ public class PerformanceAspect {
 
     @Before("controllerMethods()")
     public void beforeMethodExecution(JoinPoint joinPoint){
-        log.info("Starting execution of " + this.getMethodName(joinPoint));
+        log.info("Starting execution of {} ", this.getMethodName(joinPoint));
     }
 
     @After("controllerMethods()")
     public void afterMethodExecution(JoinPoint joinPoint){
-        log.info("Finished execution of " + this.getMethodName(joinPoint));
+        log.info("Finished execution of {} ", this.getMethodName(joinPoint));
     }
 
     @Around("controllerMethods()")
@@ -40,8 +40,7 @@ public class PerformanceAspect {
         long end = System.nanoTime();
 
         String methodName = proceedingJoinPoint.getSignature().getName();
-        log.info("Execution of " + methodName + " took "
-                + TimeUnit.NANOSECONDS.toMillis(end - start ) + "ms");
+        log.info("Execution of {} took {} ms", methodName, TimeUnit.NANOSECONDS.toMillis(end - start));
 
         return returnValue;
     }
