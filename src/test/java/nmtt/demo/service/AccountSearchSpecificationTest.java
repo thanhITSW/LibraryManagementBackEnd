@@ -70,13 +70,15 @@ public class AccountSearchSpecificationTest {
 
     @Test
     void testHasBookTitle() {
-        when(root.join(anyString())).thenAnswer(invocation -> {
+        when(root.join(anyString(), any(JoinType.class))).thenAnswer(invocation -> {
             String fieldName = invocation.getArgument(0);
-            if ("borrowings".equals(fieldName)) {
+            JoinType joinType = invocation.getArgument(1);
+            if ("borrowings".equals(fieldName) && joinType == JoinType.LEFT) {
                 return borrowingsJoin;
             }
             return null;
         });
+
         when(borrowingsJoin.get(anyString())).thenAnswer(invocation -> {
             String fieldName = invocation.getArgument(0);
             if ("book".equals(fieldName)) {
@@ -84,6 +86,7 @@ public class AccountSearchSpecificationTest {
             }
             return null;
         });
+
         when(bookJoin.get(anyString())).thenAnswer(invocation -> {
             String fieldName = invocation.getArgument(0);
             if ("title".equals(fieldName)) {
@@ -117,5 +120,53 @@ public class AccountSearchSpecificationTest {
         Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("2000-01-01", "2010-12-31");
         Predicate predicate = spec.toPredicate(root, query, criteriaBuilder);
         assertNotNull(predicate);
+    }
+
+    @Test
+    void testIsBornInDateRange_ValidDates() {
+        when(root.get(anyString())).thenAnswer(invocation -> {
+            String fieldName = invocation.getArgument(0);
+            if ("dob".equals(fieldName)) {
+                return dobPath;
+            }
+            return null;
+        });
+
+        when(criteriaBuilder.between(dobPath, LocalDate.parse("2000-01-01"), LocalDate.parse("2010-12-31")))
+                .thenReturn(mock(Predicate.class));
+
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("2000-01-01", "2010-12-31");
+        Predicate predicate = spec.toPredicate(root, query, criteriaBuilder);
+        assertNotNull(predicate);
+    }
+
+    @Test
+    void testIsBornInDateRange_NullDateFrom() {
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange(null, "2010-12-31");
+        assertNull(spec.toPredicate(root, query, criteriaBuilder));
+    }
+
+    @Test
+    void testIsBornInDateRange_NullDateTo() {
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("2000-01-01", null);
+        assertNull(spec.toPredicate(root, query, criteriaBuilder));
+    }
+
+    @Test
+    void testIsBornInDateRange_InvalidDateFromFormat() {
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("invalid-date", "2010-12-31");
+        assertNull(spec.toPredicate(root, query, criteriaBuilder));
+    }
+
+    @Test
+    void testIsBornInDateRange_InvalidDateToFormat() {
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("2000-01-01", "invalid-date");
+        assertNull(spec.toPredicate(root, query, criteriaBuilder));
+    }
+
+    @Test
+    void testIsBornInDateRange_InvalidBothDatesFormat() {
+        Specification<Account> spec = AccountSearchSpecification.isBornInDateRange("invalid-date", "invalid-date");
+        assertNull(spec.toPredicate(root, query, criteriaBuilder));
     }
 }

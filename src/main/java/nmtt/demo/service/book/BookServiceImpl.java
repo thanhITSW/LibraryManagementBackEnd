@@ -1,5 +1,8 @@
 package nmtt.demo.service.book;
 
+import com.opencsv.CSVReader;
+import com.opencsv.CSVReaderBuilder;
+import com.opencsv.exceptions.CsvException;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -11,24 +14,29 @@ import nmtt.demo.enums.ErrorCode;
 import nmtt.demo.exception.AppException;
 import nmtt.demo.mapper.BookMapper;
 import nmtt.demo.repository.BookRepository;
+import nmtt.demo.repository.BorrowingRepository;
+import nmtt.demo.service.activity_log.ActivityLogService;
 import nmtt.demo.service.cloudinary.CloudinaryService;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Reader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class BookServiceImpl implements BookService{
     private final BookRepository bookRepository;
+    private final BorrowingRepository borrowingRepository;
     private final BookMapper bookMapper;
     private final CloudinaryService cloudinaryService;
+    private final ActivityLogService logService;
 
     /**
      * Creates a new book with the provided details.
@@ -45,8 +53,13 @@ public class BookServiceImpl implements BookService{
         }
 
         Book book = bookMapper.toBook(request);
+        Book savedBook = bookRepository.save(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        HashMap<String, Object> newData = toMap(savedBook);
+        logService.log("CREATE", "BOOK", savedBook.getId(),
+                "Admin created a new book", null, newData);
+
+        return bookMapper.toBookResponse(savedBook);
     }
 
     /**
@@ -58,6 +71,20 @@ public class BookServiceImpl implements BookService{
     public List<BookResponse> getAllBook(){
         return bookRepository.findAll().stream()
                 .map(bookMapper::toBookResponse).toList();
+    }
+
+    /**
+     * Retrieves a book by its ID from the repository.
+     *
+     * @param id The unique identifier of the book to be retrieved.
+     * @return A {@link BookResponse} object containing the details of the book if found.
+     *         If the book is not found, a {@link RuntimeException} is thrown with the message "Book not found".
+     */
+    @Override
+    public BookResponse getBookById(String id){
+        return bookRepository.findById(id)
+               .map(bookMapper::toBookResponse)
+               .orElseThrow(() -> new RuntimeException("Book not found"));
     }
 
     /**
@@ -75,9 +102,16 @@ public class BookServiceImpl implements BookService{
                 .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
-        bookMapper.updateBook(book, request);
+        HashMap<String, Object> oldData = toMap(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        bookMapper.updateBook(book, request);
+        Book updatedBook = bookRepository.save(book);
+
+        HashMap<String, Object> newData = toMap(updatedBook);
+        logService.log("UPDATE", "BOOK", bookId,
+                "Admin updated book", oldData, newData);
+
+        return bookMapper.toBookResponse(updatedBook);
     }
 
     /**
@@ -88,8 +122,21 @@ public class BookServiceImpl implements BookService{
     @Transactional
     @Override
     public void deleteBookById(String bookId){
+        Book book = bookRepository
+                .findById(bookId)
+                .orElseThrow(() -> new RuntimeException("Book not found"));
+
+        if (borrowingRepository.existsByBookId(bookId)) {
+            throw new AppException(ErrorCode.NOT_DELETE_BOOK_WITH_ACTIVE);
+        }
+
+        HashMap<String, Object> oldData = toMap(book);
+
         deleteBookImage(bookId);
         bookRepository.deleteById(bookId);
+
+        logService.log("DELETE", "BOOK", bookId,
+                "Admin deleted book", oldData, null);
     }
 
     /**
@@ -123,39 +170,74 @@ public class BookServiceImpl implements BookService{
     @Transactional
     @Override
     public void importBooksFromCsv(MultipartFile file) {
-
         if (!file.getOriginalFilename().endsWith(".csv")) {
             throw new AppException(ErrorCode.INVALID_CSV_FORMAT);
         }
 
-        try (BufferedReader reader = new BufferedReader(
-                new InputStreamReader(file.getInputStream()
-                        , StandardCharsets.UTF_8))) {
+        try (Reader reader = new InputStreamReader(file.getInputStream(), StandardCharsets.UTF_8);
+             CSVReader csvReader = new CSVReaderBuilder(reader).build()) {
 
             List<Book> books = new ArrayList<>();
-            String line;
-            boolean isFirstLine = true;
-            while ((line = reader.readLine()) != null) {
-                if (isFirstLine) {
-                    isFirstLine = false;
-                    continue; // Skip header line
-                }
-                String[] data = line.split(",");
+            List<String[]> allRows = csvReader.readAll();
+
+            if (allRows.isEmpty()) {
+                throw new AppException(ErrorCode.EMPTY_CSV_FILE);
+            }
+
+            String[] headerRow = allRows.get(0);
+            List<String> expectedHeaders = List.of("title", "author", "category", "totalCopies", "availableCopies");
+            List<String> actualHeaders = Arrays.stream(headerRow)
+                    .map(h -> h.replace("\uFEFF", "").trim())
+                    .toList();
+
+            if (!actualHeaders.equals(expectedHeaders)) {
+                throw new AppException(ErrorCode.INVALID_CSV_DATA);
+            }
+
+            List<Book> existingBooks = bookRepository.findAll();
+            Map<String, Book> existingBooksMap = existingBooks.stream()
+                    .collect(Collectors.toMap(
+                            book -> (book.getTitle() + "|" + book.getAuthor()).toLowerCase(),
+                            book -> book,
+                            (b1, b2) -> b1
+                    ));
+
+            for (int i = 1; i < allRows.size(); i++) {
+                String[] data = allRows.get(i);
+
                 if (data.length < 5) {
                     throw new AppException(ErrorCode.INVALID_CSV_FORMAT);
                 }
 
-                Book book = new Book();
-                book.setTitle(data[0].trim());
-                book.setAuthor(data[1].trim());
-                book.setCategory(data[2].trim());
-                book.setTotalCopies(Integer.parseInt(data[3].trim()));
-                book.setAvailableCopies(Integer.parseInt(data[4].trim()));
-//                book.setAvailable(Boolean.parseBoolean(data[5].trim()));
-                books.add(book);
+                try {
+                    String title = data[0].trim();
+                    String author = data[1].trim();
+                    String key = (title + "|" + author).toLowerCase();
+
+                    if (existingBooksMap.containsKey(key)) {
+                        Book existingBook = existingBooksMap.get(key);
+                        existingBook.setTotalCopies(existingBook.getTotalCopies() + Integer.parseInt(data[3].trim()));
+                        existingBook.setAvailableCopies(existingBook.getAvailableCopies() + Integer.parseInt(data[4].trim()));
+                        books.add(existingBook);
+                        continue;
+                    }
+
+                    Book book = new Book();
+                    book.setTitle(title);
+                    book.setAuthor(author);
+                    book.setCategory(data[2].trim());
+                    book.setTotalCopies(Integer.parseInt(data[3].trim()));
+                    book.setAvailableCopies(Integer.parseInt(data[4].trim()));
+                    books.add(book);
+                } catch (NumberFormatException e) {
+                    throw new AppException(ErrorCode.INVALID_CSV_DATA);
+                }
             }
-            bookRepository.saveAll(books);
-        } catch (Exception e) {
+
+            if (!books.isEmpty()) {
+                bookRepository.saveAll(books);
+            }
+        } catch (IOException | CsvException e) {
             throw new AppException(ErrorCode.CSV_IMPORT_FAILED);
         }
     }
@@ -177,6 +259,8 @@ public class BookServiceImpl implements BookService{
                 .findById(bookId)
                 .orElseThrow(() -> new RuntimeException("Book not found"));
 
+        HashMap<String, Object> oldData = toMap(book);
+
         // delete image on Cloudinary if have
         if (book.getImagePublicId() != null) {
             try {
@@ -189,9 +273,13 @@ public class BookServiceImpl implements BookService{
         // update image in database
         book.setImageUrl(imageUrl);
         book.setImagePublicId(publicId);
-        bookRepository.save(book);
+        Book updatedBook = bookRepository.save(book);
 
-        return bookMapper.toBookResponse(bookRepository.save(book));
+        HashMap<String, Object> newData = toMap(updatedBook);
+        logService.log("UPDATE", "BOOK", bookId,
+                "Admin updated book image", oldData, newData);
+
+        return bookMapper.toBookResponse(updatedBook);
     }
 
     /**
@@ -236,5 +324,26 @@ public class BookServiceImpl implements BookService{
         book.setImageUrl(null);
         book.setImagePublicId(null);
         bookRepository.save(book);
+    }
+
+    /**
+     * Converts a Book entity into a HashMap containing its properties.
+     *
+     * @param book The Book entity to be converted.
+     * @return A HashMap containing the properties of the Book entity.
+     *         The keys of the HashMap are the property names, and the values are the corresponding property values.
+     */
+    private HashMap<String, Object> toMap(Book book) {
+        HashMap<String, Object> data = new HashMap<>();
+        data.put("id", book.getId());
+        data.put("title", book.getTitle());
+        data.put("author", book.getAuthor());
+        data.put("category", book.getCategory());
+        data.put("totalCopies", book.getTotalCopies());
+        data.put("availableCopies", book.getAvailableCopies());
+        data.put("imageUrl", book.getImageUrl());
+        data.put("imagePublicId", book.getImagePublicId());
+        data.put("available", book.isAvailable());
+        return data;
     }
 }
