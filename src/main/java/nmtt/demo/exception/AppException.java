@@ -1,6 +1,7 @@
 package nmtt.demo.exception;
 
 import lombok.Data;
+import nmtt.demo.enums.ErrorCode;
 
 @Data
 public class AppException extends RuntimeException{
